@@ -15,3 +15,6 @@ string sonData = JsonConvert.SerializeObject(new LoginRegisterEvent
 await webSocket.Send(OpCodes.Identify, sonData);
 
 Thread.Sleep(-1);
+
+
+//Test commit
