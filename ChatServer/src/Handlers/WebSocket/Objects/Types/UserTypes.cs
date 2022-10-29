@@ -13,16 +13,11 @@ public class BasicUser
         
     [JsonProperty("display")]    public required string Username      { get; set;  }
     [JsonProperty("display")]    public string? PictureUrl            { get; set;  }
-    
-    public static implicit operator BasicUser?(int x)
-    {
-        return Task.Run(async () => await SocketTest.DataBase.FindUserById(x)).Result;
-    }
-}
 
-public class Subscriber : BasicUser
-{
-    public int Permissions { get; set; }
+    public static implicit operator int(BasicUser user) => user.UserId;
+
+    public static implicit operator BasicUser?(int x) 
+        => Task.Run(async () => await SocketServer.DataBase.FindUserById(x)).Result;
 }
 
 public class UserProperties : BasicUser
@@ -36,11 +31,24 @@ public class UserProperties : BasicUser
     
     public static implicit operator UserProperties?(int x)
     {
-        return Task.Run(async () => await SocketTest.DataBase.FindUserById(x)).Result;
+        return Task.Run(async () => await SocketServer.DataBase.FindUserById(x)).Result;
     }
     
     public static implicit operator UserProperties?(string x)
     {
-        return Task.Run(async () => await SocketTest.DataBase.FindUserBySession(x)).Result;
+        return Task.Run(async () => await SocketServer.DataBase.FindUserBySession(x)).Result;
     }
+}
+
+[Flags]
+public enum Permissions
+{
+    Member,
+    CanKick,
+    Administrator
+}
+
+public class Subscriber : BasicUser
+{
+    public Permissions Permissions { get; set; }
 }

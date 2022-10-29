@@ -6,35 +6,34 @@ using Newtonsoft.Json;
 
 namespace ChatServer.Handlers;
 
-public partial class TestOrm
+public partial class EntityFrameworkOrm
 {
-    //Todo: prepare for websocket (remove optional)
-    public async Task<EntityEntry<UserProperties>?> Register(LoginRegisterEvent registerEvent, SocketUser? socketUser = null)
+    public async Task Register(LoginRegisterEvent registerEvent, SocketUser socketUser)
     {
         if (registerEvent.Username is null || registerEvent.Email is null)
         {
-            //await socketUser.Send(OpCodes.InvalidRequest, "Fields are missing.");
-            return null;
+            await socketUser.Send(OpCodes.InvalidRequest, "Fields are missing.");
+            return;
         }
 
         if (!Regex.IsMatch(registerEvent.Email, @"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$",
                 RegexOptions.NonBacktracking | RegexOptions.Compiled)
             || registerEvent.Email.Length > 254)
         {
-            //await socketUser.Send(OpCodes.InvalidRequest, "Invalid email.");
-            return null;
+            await socketUser.Send(OpCodes.InvalidRequest, "Invalid email.");
+            return;
         }
 
         if (registerEvent.Password.Length is < 6 or > 27)
         {
-            //await socketUser.Send(OpCodes.InvalidRequest, "Invalid password.");
-            return null;
+            await socketUser.Send(OpCodes.InvalidRequest, "Invalid password.");
+            return;
         }
 
         if (Users.Any(user => user.Email == registerEvent.Email))
         {
-            //await socketUser.Send(OpCodes.InvalidRequest, "Email already exists.");
-            return null;
+            await socketUser.Send(OpCodes.InvalidRequest, "Email already exists.");
+            return;
         }
 
         EntityEntry<UserProperties> user = Users.Add(new UserProperties
@@ -47,24 +46,14 @@ public partial class TestOrm
 
         await SaveChangesAsync();
 
-        //await socketUser.Send(Events.Registered);
-        return user;
+        await socketUser.Send(Events.Registered);
     }
 
-    //Todo: Add login via username and password
-    //If sessions are changed, implement login via session
+    //Todo: If sessions are changed, implement login via session
+    //10/29/22 - On a further review, if a token still exists and isn't invalidated, the client should still technically be logged in either way.
     public async Task Login(LoginRegisterEvent loginEvent, SocketUser user)
     {
-        string password = loginEvent.Password;
-        string? email = loginEvent.Email,
-            username = loginEvent.Username;
-
-        string login = email == "" ? username : email;
-
-        //hash the password
-
-        //Login via email / username
-        if (await Users.SingleOrDefaultAsync(x => x.Email == email && x.Password == password) is not { } userSession)
+        if (await Users.SingleOrDefaultAsync(x => x.Email == loginEvent.Email && x.Password == loginEvent.Password) is not { } userSession)
         {
             await user.Send(OpCodes.InvalidRequest, "Invalid username or password");
 

@@ -1,11 +1,9 @@
 ﻿using System;
 using Newtonsoft.Json;
 
-namespace ChatServer.Objects
+namespace ChatServer.Objects;
+
+public class HeartBeatAck
 {
-    public class HeartBeatAck
-    {
-        [JsonProperty("last_heartbeat")]
-        public DateTimeOffset Last { get; set; }
-    }
+    [JsonProperty("last_heartbeat")] public DateTimeOffset Last { get; set; }
 }

@@ -6,10 +6,12 @@ using Newtonsoft.Json;
 
 namespace ChatServer.Handlers
 {
-    public class SocketTest : IDisposable
+    public class SocketServer : IDisposable
     {
-        //private static readonly Database DataBase = new PostGre("Host=localhost;Port=5432;Email=postgres;Password=root;Database=chat");
-        public static readonly TestOrm DataBase = new TestOrm();
+        //This might cause lots of issues lmao
+        private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { Error = (se, ev) => { ev.ErrorContext.Handled = true; } };
+
+        public static readonly EntityFrameworkOrm DataBase = new EntityFrameworkOrm();
         
         private static readonly Socket Listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         private static readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Loopback, 8787);
@@ -144,9 +146,8 @@ namespace ChatServer.Handlers
                 while (client.UnderSocket.Available > 0);
 
                 string decompressedData = GZip.Decompress(stream);
-                WebSocketMessage? message = JsonConvert.DeserializeObject<WebSocketMessage>(decompressedData);
                 
-                if (message is null) //webSocketMessage.Session != client.SessionId (This causes ore identification issues, 
+                if (JsonConvert.DeserializeObject<WebSocketMessage>(decompressedData) is not {} message) 
                 {
                     await client.Send(OpCodes.InvalidRequest);
                     continue;
@@ -170,10 +171,11 @@ namespace ChatServer.Handlers
             Console.WriteLine($"[OPCODE] {webSocketMessage.OpCode}");
             switch (webSocketMessage.OpCode)
             {
+                //LRS
                 //Can be exploited by mass requests if logged out
                 case OpCodes.Register when !user.IsIdentified:
                 {
-                    if (JsonConvert.DeserializeObject<LoginRegisterEvent>(webSocketMessage.Message) is not { } registerEvent)
+                    if (JsonConvert.DeserializeObject<LoginRegisterEvent>(webSocketMessage.Message, SerializerSettings) is not { } registerEvent)
                     {
                         await user.Send(OpCodes.InvalidRequest, "Missing parameters [OP 5]");
                         break;
@@ -185,7 +187,7 @@ namespace ChatServer.Handlers
 
                 case OpCodes.Identify when !user.IsIdentified:
                 {
-                    if (JsonConvert.DeserializeObject<LoginRegisterEvent>(webSocketMessage.Message) is not { } loginEvent)
+                    if (JsonConvert.DeserializeObject<LoginRegisterEvent>(webSocketMessage.Message, SerializerSettings) is not { } loginEvent)
                     {
                         await user.Send(OpCodes.InvalidRequest, "Missing parameters [OP 2]");
                         break;
@@ -195,14 +197,60 @@ namespace ChatServer.Handlers
                     break;
                 }
 
+                //Actual commands
                 case OpCodes.CreateServer:
                 {
-                    if (DataBase.FindUserBySession(user.SessionId) is not { } foundUser)
+                    if (await DataBase.FindUserBySession(webSocketMessage.Session) is not { } foundUser)
+                    {
+                        await user.Send(OpCodes.InvalidRequest, "Invalid session");
+                        break;
+                    }
+
+                    if (JsonConvert.DeserializeObject<ServerObject>(webSocketMessage.Message, SerializerSettings) is not { } serverObject)
+                    {
+                        await user.Send(OpCodes.InvalidRequest, "Missing parameters [OP 2]");
+                        break;
+                    }
+                    
+                    await DataBase.CreateServer(foundUser, serverObject);
+
+                    await user.Send(Events.JoinedServer, JsonConvert.SerializeObject(serverObject));
+                    break;
+                }
+
+                case OpCodes.JoinServer:
+                {
+                    if (await DataBase.FindUserBySession(webSocketMessage.Session) is not { } foundUser)
                     {
                         await user.Send(OpCodes.InvalidRequest, "Invalid session");
                         break;
                     }
                     
+                    if (JsonConvert.DeserializeObject<JoinServer>(webSocketMessage.Message, SerializerSettings) is not { } joinObject)
+                    {
+                        await user.Send(OpCodes.InvalidRequest, "Missing parameters [OP 2]");
+                        break;
+                    }
+
+                    await DataBase.JoinServer(joinObject, foundUser, user);
+                    break;
+                }
+
+                case OpCodes.BanUser:
+                {
+                    if (await DataBase.FindUserBySession(webSocketMessage.Session) is not { } foundUser)
+                    {
+                        await user.Send(OpCodes.InvalidRequest, "Invalid session");
+                        break;
+                    }
+                    
+                    //Todo: Create object for banning and kicking
+                    if (JsonConvert.DeserializeObject<JoinServer>(webSocketMessage.Message, SerializerSettings) is not { } joinObject)
+                    {
+                        await user.Send(OpCodes.InvalidRequest, "Missing parameters [OP 2]");
+                        break;
+                    }
+
                     break;
                 }
             }

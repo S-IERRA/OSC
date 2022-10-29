@@ -10,7 +10,9 @@ using ChatServer.Handlers;
 using ChatServer.Objects;
 using Microsoft.EntityFrameworkCore;
 
-await using var ctx = new TestOrm();
+await using var ctx = new EntityFrameworkOrm();
+
+/*
 await ctx.Database.EnsureDeletedAsync();
 await ctx.Database.EnsureCreatedAsync();
 
@@ -61,6 +63,6 @@ foreach (var s in server2.Users)
     Console.WriteLine(s.Username + ' ' + 2);
 }
 
-Console.WriteLine("DONE!");
+Console.WriteLine("DONE!");*/
 
 Thread.Sleep(-1);
