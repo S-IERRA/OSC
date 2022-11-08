@@ -12,11 +12,10 @@ namespace ChatServer.Handlers
 
         //public IPAddress UserIp { get; set; 
         public bool IsIdentified = false;
-        public string SessionId { get; set; }
+        public string SessionId;
         
         public void Dispose()
         {
-            Console.WriteLine("[SERVER] Disposed & closed dead client");
             UserCancellation.Cancel();
             UnderSocket.Close();
             

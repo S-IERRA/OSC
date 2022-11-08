@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 //Anything that may require changes in the future and not immediate action (editing messages) needs to be checked by id not by session due to changing sessions
 
 //Vulnerability on signed ids, passing a invalid negative id may crash?
+
 namespace ChatServer.Handlers
 {
     public partial class EntityFrameworkOrm : DbContext
@@ -19,14 +20,6 @@ namespace ChatServer.Handlers
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<ChannelObject>()
-                .HasMany(x => x.Messages)
-                .WithOne(x => x.Channel);
-
-            builder.Entity<ServerObject>()
-                .HasMany(x => x.Users)
-                .WithMany(x => x.Servers);
-            
             //.WithMany(x=>x.)
         }
 
@@ -38,8 +31,8 @@ namespace ChatServer.Handlers
         public async Task<UserProperties?> FindUserById(int id) =>
             await Users.Where(x => x.UserId == id).Include(x=>x.Servers).FirstOrDefaultAsync();
 
-        public async Task<UserProperties?> FindUserBySession(string serverId) =>
-            await Users.Where(x => x.Session == serverId).FirstOrDefaultAsync();
+        public async Task<UserProperties?> FindUserBySession(string session) =>
+            await Users.Where(x => x.Session == session).FirstOrDefaultAsync();
         
         public async Task<ServerObject?> FindServerById(int serverId) =>
             await Servers.Where(x => x.Id == serverId).Include(x=> x.Users).FirstOrDefaultAsync();

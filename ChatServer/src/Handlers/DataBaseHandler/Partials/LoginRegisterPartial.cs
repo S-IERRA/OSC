@@ -8,7 +8,7 @@ namespace ChatServer.Handlers;
 
 public partial class EntityFrameworkOrm
 {
-    public async Task Register(LoginRegisterEvent registerEvent, SocketUser socketUser)
+    public async Task Register(LoginRegisterEvent registerEvent, SocketUser? socketUser = null)
     {
         if (registerEvent.Username is null || registerEvent.Email is null)
         {
@@ -46,7 +46,7 @@ public partial class EntityFrameworkOrm
 
         await SaveChangesAsync();
 
-        await socketUser.Send(Events.Registered);
+        //await socketUser.Send(Events.Registered);
     }
 
     //Todo: If sessions are changed, implement login via session

@@ -212,7 +212,7 @@ namespace ChatServer.Handlers
                         break;
                     }
                     
-                    await DataBase.CreateServer(foundUser, serverObject);
+                    //await DataBase.CreateServer(foundUser, serverObject);
 
                     await user.Send(Events.JoinedServer, JsonConvert.SerializeObject(serverObject));
                     break;

@@ -16,6 +16,7 @@
         
         CreateServer = 7,
         JoinServer = 8,
+        RequestServers = 12,
         GetServerMembers = 9,
         BanUser = 10,
         KickUser = 11,
@@ -38,6 +39,8 @@
         
         ServerCreated = 5,
         ServerUpdated = 7,
+        ServerJoined = 11,
+        ServerLeft = 8,
         
         JoinedServer = 6,
         UserIsBanned = 10,

@@ -14,7 +14,7 @@ public class ChannelObject
 
 public class DmChannel : ChannelObject
 {
-    [JsonProperty("recipient")] public Subscriber Subscribers { get; set; }
+    [JsonProperty("recipient")] public UserProperties Subscriber { get; set; }
 }
 
 public class GroupChannel : ChannelObject
