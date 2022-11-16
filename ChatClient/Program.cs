@@ -3,6 +3,8 @@
 using ChatClient.Handlers;
 using Newtonsoft.Json;
 
+//Cachce system for msgs
+
 WebSocketHandler webSocket = new WebSocketHandler();
 
 string sonData = JsonConvert.SerializeObject(new LoginRegisterEvent

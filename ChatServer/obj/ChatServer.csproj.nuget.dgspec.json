@@ -10,11 +10,11 @@
         "projectUniqueName": "D:\\projects\\V-ARS\\OSC\\ChatServer\\ChatServer.csproj",
         "projectName": "ChatServer",
         "projectPath": "D:\\projects\\V-ARS\\OSC\\ChatServer\\ChatServer.csproj",
-        "packagesPath": "C:\\Users\\some1\\.nuget\\packages\\",
+        "packagesPath": "C:\\Users\\someOne\\.nuget\\packages\\",
         "outputPath": "D:\\projects\\V-ARS\\OSC\\ChatServer\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\some1\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\someOne\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -40,10 +40,6 @@
         "net7.0": {
           "targetAlias": "net7.0",
           "dependencies": {
-            "BCrypt.Net-Next": {
-              "target": "Package",
-              "version": "[4.0.3, )"
-            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[7.0.0-preview.4.22229.2, )"
@@ -52,10 +48,6 @@
               "target": "Package",
               "version": "[8.0.29, )"
             },
-            "Newtonsoft.Json": {
-              "target": "Package",
-              "version": "[13.0.1, )"
-            },
             "Npgsql": {
               "target": "Package",
               "version": "[7.0.0-preview.7, )"
@@ -63,10 +55,6 @@
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
               "version": "[6.0.6, )"
-            },
-            "System.Data.SqlClient": {
-              "target": "Package",
-              "version": "[4.8.3, )"
             },
             "System.Diagnostics.DiagnosticSource": {
               "target": "Package",
@@ -93,7 +81,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.100-rc.1.22431.12\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.100\\RuntimeIdentifierGraph.json"
         }
       }
     }

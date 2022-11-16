@@ -1,14 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using ChatServer.Handlers;
 
 namespace ChatServer.Objects;
 
 public class Identified
 {
-    [JsonProperty("userid")]     int UserId  {get;set;}
-    [JsonProperty("created_at")] DateTimeOffset CreationDate {get;set;}
-        
-    [JsonProperty("email")]      string Email{get;set;} 
-    [JsonProperty("display")]    string Username {get;set;}
-    //[JsonProperty("friends")]    public UserProperties? Friends            { get; set;  }
-    [JsonProperty("subscribed")] ulong[]? SubscribedChannels {get;set;}
+    public int UserId { get; set; }
+    public DateTimeOffset CreationDate { get; set; }
+
+    public string Email { get; set; }
+    public string Username { get; set; }
+    public User? Friends { get; set; }
+    public ulong[]? SubscribedChannels { get; set; }
 }

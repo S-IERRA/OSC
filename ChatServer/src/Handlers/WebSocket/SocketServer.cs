@@ -1,259 +1,185 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using ChatServer.Extensions;
 using ChatServer.Objects;
-using Newtonsoft.Json;
 
-namespace ChatServer.Handlers
+namespace ChatServer.Handlers;
+
+//Todo: in V2 remove some of the null checks replace with Empty statements
+public class SocketServer2 : IDisposable
 {
-    public class SocketServer : IDisposable
+    private static readonly Factory Factory = new Factory();
+    private static readonly CancellationTokenSource Cts = new();
+
+    private static readonly HashSet<EndPoint> ConnectedIps = new();
+    
+    private static readonly Socket     Listener = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+    private static readonly IPEndPoint EndPoint = new(IPAddress.Loopback, 8787);
+    
+    private SocketState _state = SocketState.Undefined;
+        
+    private bool CanRun() => !Cts.Token.IsCancellationRequested && _state is SocketState.Connected;
+        
+    private static DateTime GetCurrentTime => DateTime.Now;
+    
+    public async Task Start()
     {
-        //This might cause lots of issues lmao
-        private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { Error = (se, ev) => { ev.ErrorContext.Handled = true; } };
+        Listener.Bind(EndPoint);
+        Listener.Listen(32);
+        
+        _state = SocketState.Connected;
 
-        public static readonly EntityFrameworkOrm DataBase = new EntityFrameworkOrm();
-        
-        private static readonly Socket Listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        private static readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Loopback, 8787);
-        
-        private static readonly CancellationTokenSource Cts = new CancellationTokenSource();
-        
-        private SocketState _state = SocketState.Undefined;
-        
-        private bool IsConnected() => _state is SocketState.Connected;
-        private bool IsCancelled() => Cts.Token.IsCancellationRequested;
-        
-        private DateTime GetCurrentTime() => DateTime.Now;
-
-        public async Task Start()
+        while (CanRun())
         {
-            Listener.Bind(EndPoint);
+            Socket newClient = await Listener.AcceptAsync(Cts.Token);
+            SocketUser socketUser = new SocketUser(newClient);
 
-            Listener.Listen(32);
-            _state = SocketState.Connected;
-
-            while (IsConnected() && !IsCancelled())
-            {
-                Socket newClient = await Listener.AcceptAsync(Cts.Token);
-                SocketUser socketUser = new SocketUser(newClient);
-
-                Console.WriteLine("[SERVER] Accepted new connection");
-                
-                _ = Task.Run(() => VirtualUserHandler(socketUser), socketUser.UserCancellation.Token);
-            }
+            /*todo: CRITICAL: Host can have more than 1 session resulting in a crash due to hashmap only supporting 1 of the same input
+             This is specifically a large issue when a user wants a local hosted bot or alt account to be able to connect to the server
+            if (newClient.RemoteEndPoint is not null) 
+                ConnectedIps.Add(newClient.RemoteEndPoint);
+                */
+            
+            Console.WriteLine("[SERVER] Accepted new connection");
+            
+            _ = Task.Run(() => VirtualUserHandler(socketUser), socketUser.UserCancellation.Token);
         }
+    }
+
+    private async Task VirtualUserHandler(SocketUser socketUser)
+    {
+        EntityFramework2 context = Factory.CreateDbContext();
+
+        byte[] localBuffer = new byte[512];
         
-        public void Dispose()
+        bool isTimedOut = false,
+            receivedAck = false;
+
+        async Task HeartBeat()
         {
-            Listener.Close();
-            
-            Cts.Cancel();
-            Cts.Dispose();
-            
-            GC.SuppressFinalize(this);
-        }
-
-        private async Task VirtualUserHandler(SocketUser client)
-        {
-            bool isTimedOut = false,
-                receivedAck = false;
- 
-            int timeout = 10,
-                requests = 0,
-                previousTimeouts = 0;
-
-            // thread.sleep(-1) if spammed enough - CRITICAL / preferably rewrite this method
-            async Task RateLimit()
+            for (;;)
             {
-                for (;;)
-                {
-                    DateTimeOffset blockScan = DateTimeOffset.Now + TimeSpan.FromSeconds(15);
-                    while (GetCurrentTime() < blockScan)
-                    {
-                        await 5;
-
-                        if (requests < (requests / 15) + 1)
-                        {
-                            previousTimeouts--;
-                            isTimedOut = false;
-
-                            continue;
-                        }
-
-                        isTimedOut = true;
-                        //requests
-
-                        return;
-                    }
-                }
-            }
-            
-            //Change the client session every n amount of heart beats
-            async Task HeartBeat()
-            {
-                for (;;)
-                {
-                    await client.Send(OpCodes.HeartBeat);
-                    if (client.UserCancellation.IsCancellationRequested)
-                        return;
+                await socketUser.Send(OpCodes.HeartBeat);
+                if (socketUser.UserCancellation.IsCancellationRequested)
+                    return;
                     
-                    Console.WriteLine("[HEARTBEAT] Sent Heartbeat");
+                Console.WriteLine("[HEARTBEAT] Sent Heartbeat");
 
-                    DateTimeOffset nextAck = DateTimeOffset.Now + TimeSpan.FromSeconds(5);
+                DateTimeOffset nextAck = DateTimeOffset.Now + TimeSpan.FromSeconds(5);
 
-                    while (GetCurrentTime() < nextAck)
-                    {
-                        if (receivedAck)
-                            break;
+                while (GetCurrentTime < nextAck)
+                {
+                    if (receivedAck)
+                        break;
 
-                        await 2;
-                    }
+                    await 2;
+                }
 
-                    if (!receivedAck)
-                    {
-                        if(client.IsIdentified)
-                            await DataBase.LogOut(client);
+                if (!receivedAck)
+                {
+                    if(socketUser.IsIdentified)
+                        Console.WriteLine();//await context.LogOut(client);
 
-                        await client.Send(OpCodes.ConnectionClosed);
-                        client.Dispose();
+                    await socketUser.Send(OpCodes.ConnectionClosed);
+                    socketUser.Dispose();
                         
-                        return;
-                    }
+                    return;
+                }
                     
-                    receivedAck = false;
+                receivedAck = false;
                     
-                    await 5;
-                }
-            }
-
-            _ = Task.Run(HeartBeat, Cts.Token);
-           //Task.Run(RateLimit);
-
-           byte[] localBuffer = new byte[512];
-           
-           while (IsConnected() && !IsCancelled())
-           {
-               if (isTimedOut)
-                   await timeout;
-               
-               using MemoryStream stream = new MemoryStream();
-
-                do
-                {
-                    int received = await client.UnderSocket.ReceiveAsync(localBuffer, SocketFlags.None);
-                    stream.Write(localBuffer, 0, received);
-                } 
-                while (client.UnderSocket.Available > 0);
-
-                string decompressedData = GZip.Decompress(stream);
-                
-                if (JsonConvert.DeserializeObject<WebSocketMessage>(decompressedData) is not {} message) 
-                {
-                    await client.Send(OpCodes.InvalidRequest);
-                    continue;
-                }
-
-                requests++;
-
-                if (message.OpCode == OpCodes.HeartBeatAck)
-                {
-                    receivedAck = true;
-                    Console.WriteLine("[HEARTBEAT] Received ACK");
-                    continue;
-                }
-
-                VirtualPacketHandler(message, client);
+                await 5;
             }
         }
         
-        private async Task VirtualPacketHandler(WebSocketMessage webSocketMessage, SocketUser user)
+        //Ratelimit
+        async Task RateLimit()
         {
-            Console.WriteLine($"[OPCODE] {webSocketMessage.OpCode}");
-            switch (webSocketMessage.OpCode)
+            for (;;)
             {
-                //LRS
-                //Can be exploited by mass requests if logged out
-                case OpCodes.Register when !user.IsIdentified:
-                {
-                    if (JsonConvert.DeserializeObject<LoginRegisterEvent>(webSocketMessage.Message, SerializerSettings) is not { } registerEvent)
-                    {
-                        await user.Send(OpCodes.InvalidRequest, "Missing parameters [OP 5]");
-                        break;
-                    }
-
-                    await DataBase.Register(registerEvent, user);
-                    break;
-                }
-
-                case OpCodes.Identify when !user.IsIdentified:
-                {
-                    if (JsonConvert.DeserializeObject<LoginRegisterEvent>(webSocketMessage.Message, SerializerSettings) is not { } loginEvent)
-                    {
-                        await user.Send(OpCodes.InvalidRequest, "Missing parameters [OP 2]");
-                        break;
-                    }
-                    
-                    await DataBase.Login(loginEvent, user);
-                    break;
-                }
-
-                //Actual commands
-                case OpCodes.CreateServer:
-                {
-                    if (await DataBase.FindUserBySession(webSocketMessage.Session) is not { } foundUser)
-                    {
-                        await user.Send(OpCodes.InvalidRequest, "Invalid session");
-                        break;
-                    }
-
-                    if (JsonConvert.DeserializeObject<ServerObject>(webSocketMessage.Message, SerializerSettings) is not { } serverObject)
-                    {
-                        await user.Send(OpCodes.InvalidRequest, "Missing parameters [OP 2]");
-                        break;
-                    }
-                    
-                    //await DataBase.CreateServer(foundUser, serverObject);
-
-                    await user.Send(Events.JoinedServer, JsonConvert.SerializeObject(serverObject));
-                    break;
-                }
-
-                case OpCodes.JoinServer:
-                {
-                    if (await DataBase.FindUserBySession(webSocketMessage.Session) is not { } foundUser)
-                    {
-                        await user.Send(OpCodes.InvalidRequest, "Invalid session");
-                        break;
-                    }
-                    
-                    if (JsonConvert.DeserializeObject<JoinServer>(webSocketMessage.Message, SerializerSettings) is not { } joinObject)
-                    {
-                        await user.Send(OpCodes.InvalidRequest, "Missing parameters [OP 2]");
-                        break;
-                    }
-
-                    await DataBase.JoinServer(joinObject, foundUser, user);
-                    break;
-                }
-
-                case OpCodes.BanUser:
-                {
-                    if (await DataBase.FindUserBySession(webSocketMessage.Session) is not { } foundUser)
-                    {
-                        await user.Send(OpCodes.InvalidRequest, "Invalid session");
-                        break;
-                    }
-                    
-                    //Todo: Create object for banning and kicking
-                    if (JsonConvert.DeserializeObject<JoinServer>(webSocketMessage.Message, SerializerSettings) is not { } joinObject)
-                    {
-                        await user.Send(OpCodes.InvalidRequest, "Missing parameters [OP 2]");
-                        break;
-                    }
-
-                    break;
-                }
+                
             }
         }
+
+        _ = Task.Run(HeartBeat, Cts.Token);
+        
+        //Receive Data
+
+        while (CanRun())
+        {
+            if (isTimedOut)
+                return; //Convert this to an actual timeout
+
+            using MemoryStream dataStream = new();
+
+            do
+            {
+                int received = await socketUser.UnderSocket.ReceiveAsync(localBuffer, SocketFlags.None);
+
+                dataStream.Write(localBuffer, 0, received);
+            } while (socketUser.UnderSocket.Available > 0);
+
+            string rawMessage = Encoding.UTF8.GetString(dataStream.ToArray()); //Utilise Gzip decompression
+            if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
+            {
+                await socketUser.Send(OpCodes.InvalidRequest);
+                continue;
+            }
+            
+            Console.WriteLine($"[SERVER] Received: {socketMessage.OpCode} {socketMessage.Message}");
+
+            if (!socketUser.IsIdentified)
+            {
+                if (!JsonHelper.TryDeserialize<LoginRegisterEvent>(socketMessage.Message, out var lrEvent))
+                {
+                    await socketUser.Send(OpCodes.InvalidRequest);
+                    break;
+                }
+
+                switch (socketMessage.OpCode)
+                {
+                    case OpCodes.Identify:
+                    {
+
+                        break;
+                    }
+
+                    case OpCodes.Register:
+                    {
+                        break;
+                    }
+                }
+            }
+            
+            //Get user by session
+            
+            //Check permissions
+            switch (socketMessage.OpCode)
+            {
+                case OpCodes.HeartBeat:
+                    receivedAck = true;
+                    break;
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposing) 
+            return;
+        
+        //Dispose objects
+    }
+
+    ~SocketServer2()
+    {
+        Dispose(false);
     }
 }

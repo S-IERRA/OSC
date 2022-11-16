@@ -1,18 +1,22 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Newtonsoft.Json;
+﻿using System.Text.Json;
 using System.Net.Sockets;
+using System.Text.Json.Serialization;
 using ChatServer.Objects;
 
 namespace ChatServer.Handlers
 {
-    public record SocketUser(Socket UnderSocket) : IDisposable
+    public record SocketUser(Socket UnderSocket) : IDisposable 
     {
+        private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+        
         public readonly CancellationTokenSource UserCancellation = new CancellationTokenSource();
 
         //public IPAddress UserIp { get; set; 
         public bool IsIdentified = false;
-        public string SessionId;
+        public string? SessionId;
         
         public void Dispose()
         {
@@ -24,34 +28,43 @@ namespace ChatServer.Handlers
             GC.SuppressFinalize(this);
         }
 
-        public async Task Send(OpCodes opCode, string data = "", Events eventType = Events.Null)
+        private async Task SendData(OpCodes opCode, Events? eventType = null, string? dataSerialized = default)
         {
-            string serialized = JsonConvert.SerializeObject(new WebSocketMessage(opCode, data, eventType));
-
-            byte[] dataCompressed = GZip.Compress(serialized);
-
-            if (UnderSocket.Connected)
-            {
-                await UnderSocket.SendAsync(dataCompressed, SocketFlags.None);
-                return;
-            }
+            if (!UnderSocket.Connected)
+                Dispose();
             
-            Dispose();
+            WebSocketMessage message = new WebSocketMessage(opCode, dataSerialized, eventType, default);
+
+            string messageSerialized = JsonSerializer.Serialize(message, Options);
+            byte[] dataCompressed = GZip.Compress(messageSerialized);
+
+            await UnderSocket.SendAsync(dataCompressed, SocketFlags.None);
+        }
+
+        public async Task Send(OpCodes opCode) 
+            => await SendData(opCode);
+        
+        public async Task Send(Events eventType)
+            => await SendData(OpCodes.Event, eventType);
+        
+        public async Task Send(OpCodes opCode, Events eventType) 
+            => await SendData(opCode, eventType);
+        
+        public async Task Send(OpCodes opCode, string? message) 
+            => await SendData(opCode, null, message);
+
+        public async Task Send(OpCodes opCode, object message)
+        {
+            string jsonMessage = JsonSerializer.Serialize(message);
+            
+            await SendData(opCode, null, jsonMessage);
         }
         
-        public async Task Send(Events eventName, string data = "")
-        {
-            string serialized = JsonConvert.SerializeObject(new WebSocketMessage(OpCodes.Event, data, eventName));
-
-            byte[] dataCompressed = GZip.Compress(serialized);
-
-            if (UnderSocket.Connected)
-            {
-                await UnderSocket.SendAsync(dataCompressed, SocketFlags.None);
-                return;
-            }
+        public async Task Send(Events eventType, object message)
+        { 
+            string jsonMessage = JsonSerializer.Serialize(message);
             
-            Dispose();
+            await SendData(OpCodes.Event, eventType, jsonMessage);
         }
     }
 }
