@@ -5,6 +5,19 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
 
+public class Invite : IEntityTypeConfiguration<Invite>
+{
+    public int ServerId { get; set; }
+    public string InviteCode { get; set; }
+
+    public void Configure(EntityTypeBuilder<Invite> builder)
+    {
+        builder.HasKey(e => new {e.ServerId, e.InviteCode});
+
+        builder.Property(e => e.InviteCode).HasMaxLength(25);
+    }
+}
+
 public class Server : IEntityTypeConfiguration<Server>
 {
     public int Id { get; set; }
@@ -16,13 +29,13 @@ public class Server : IEntityTypeConfiguration<Server>
     public string?   Description  { get; set; }
     public string?   Icon         { get; set; }
     public string?   Banner       { get; set; }
-    public string[]  InviteCodes { get; set; } = Array.Empty<string>();
     
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    public virtual List<Member>  Members  { get; set; }
-    public virtual List<Role>    Roles    { get; set; }
-    public virtual List<Channel> Channels { get; set; }
+    public virtual ICollection<Member>  Members     { get; set; }
+    public virtual ICollection<Role>    Roles       { get; set; }
+    public virtual ICollection<Channel> Channels    { get; set; }
+    public virtual ICollection<Invite>  InviteCodes { get; set; }
 
     public void Configure(EntityTypeBuilder<Server> builder)
     {
@@ -40,8 +53,6 @@ public class Server : IEntityTypeConfiguration<Server>
 
 public class Member : IEntityTypeConfiguration<Member>
 {
-    public int Id { get; set; }
-    
     private int userId;
     private int serverId;
     
@@ -51,11 +62,11 @@ public class Member : IEntityTypeConfiguration<Member>
     public Server Server { get; set; }
     public User   User   { get; set; }
     
-    public virtual List<Role> Roles { get; set; }
-
+    public virtual ICollection<Role> Roles { get; set; }
+    
     public void Configure(EntityTypeBuilder<Member> builder)
     {
-        builder.Property(e => e.Id).ValueGeneratedOnAdd();
+        builder.HasKey(e => new {e.userId, e.serverId});
         builder.Property(e => e.serverId).IsRequired();
         
         builder.HasKey(e => new { e.User.Id, e.userId });

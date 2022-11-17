@@ -10,7 +10,7 @@ public partial record AccountService
     {
         if (registerEvent is { Username: null } or {Email: null})
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, "Fields are missing.");
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MissingFields);
             return;
         }
 
@@ -18,19 +18,19 @@ public partial record AccountService
                 RegexOptions.NonBacktracking | RegexOptions.Compiled)
             || registerEvent.Email.Length > 254)
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, "Invalid email.");
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidEmail);
             return;
         }
 
         if (registerEvent.Password.Length is < 6 or > 27)
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, "Invalid password length.");
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidPasswordLength);
             return;
         }
 
         if (Context.Users.Any(user => user.Email == registerEvent.Email))
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, "Email already exists.");
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.EmailAlreadyExists);
             return;
         }
 
@@ -51,7 +51,7 @@ public partial record AccountService
         if (await Context.Users.SingleOrDefaultAsync(x => x.Email == loginEvent.Email && x.Password == loginEvent.Password) 
             is not { } userSession)
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, "Invalid username or password");
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidUserOrPass);
 
             return;
         }
@@ -62,6 +62,7 @@ public partial record AccountService
 
         SocketUser.IsIdentified = true;
 
+        //Don't send the full User object 
         await SocketUser.Send(Events.Identified, userSession);
     }
 
@@ -83,12 +84,12 @@ public partial record AccountService
         await SocketUser.Send(Events.Identified, userSession);
     }
 
-    public async Task LogOut(User user)
+    public async Task LogOut()
     {
         if (!SocketUser.IsIdentified)
             return;
         
-        user.Session = null;
+        SocketUser.SessionId = null;
 
         await Context.SaveChangesAsync();
 

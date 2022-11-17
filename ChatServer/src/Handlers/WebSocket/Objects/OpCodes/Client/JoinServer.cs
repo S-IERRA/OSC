@@ -1,8 +1,17 @@
 ﻿namespace ChatServer.Objects;
 
-public class JoinServer
+public class JoinServerEvent
+{
+    public string InviteCode { get; set; }
+}
+
+//Move this to a different file
+public class LeaveServerEvent
 {
     public int ServerId { get; set; }
+}
 
-    public static implicit operator int(JoinServer server) => server.ServerId;
+public class DeleteServerEvent
+{
+    public int ServerId { get; set; }
 }

@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using ChatServer.Extensions;
 using ChatServer.Objects;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChatServer.Handlers;
 
@@ -50,6 +51,7 @@ public class SocketServer2 : IDisposable
     private async Task VirtualUserHandler(SocketUser socketUser)
     {
         EntityFramework2 context = Factory.CreateDbContext();
+        AccountService userDbService = new(context, socketUser);
 
         byte[] localBuffer = new byte[512];
         
@@ -79,7 +81,7 @@ public class SocketServer2 : IDisposable
                 if (!receivedAck)
                 {
                     if(socketUser.IsIdentified)
-                        Console.WriteLine();//await context.LogOut(client);
+                        await userDbService.LogOut();
 
                     await socketUser.Send(OpCodes.ConnectionClosed);
                     socketUser.Dispose();
@@ -93,12 +95,13 @@ public class SocketServer2 : IDisposable
             }
         }
         
-        //Ratelimit
+        //RateLimit
         async Task RateLimit()
         {
+            await 1;
             for (;;)
             {
-                
+                return;
             }
         }
 
@@ -126,8 +129,13 @@ public class SocketServer2 : IDisposable
                 await socketUser.Send(OpCodes.InvalidRequest);
                 continue;
             }
-            
-            Console.WriteLine($"[SERVER] Received: {socketMessage.OpCode} {socketMessage.Message}");
+
+            //This opcode handling is a bit fucking wack
+            if (socketMessage.OpCode == OpCodes.HeartBeatAck)
+            {
+                receivedAck = true;
+                continue;
+            }
 
             if (!socketUser.IsIdentified)
             {
@@ -140,25 +148,42 @@ public class SocketServer2 : IDisposable
                 switch (socketMessage.OpCode)
                 {
                     case OpCodes.Identify:
-                    {
-
+                        await userDbService.Login(lrEvent);
                         break;
-                    }
 
                     case OpCodes.Register:
-                    {
+                        await userDbService.Register(lrEvent);
                         break;
-                    }
                 }
             }
             
             //Get user by session
+            //This seems quite inefficient as we are querying the database fore each request
+            if (await context.Users.FirstOrDefaultAsync(x => x.Session == socketMessage.Session) is not { } user)
+            {
+                await socketUser.Send(OpCodes.InvalidRequest, "Invalid session");
+                continue;
+            }
             
-            //Check permissions
+            //Todo: Check permissions
+            //Todo: clean this up
+            //Todo: possibly move messga and user to AccountService?
             switch (socketMessage.OpCode)
             {
-                case OpCodes.HeartBeat:
-                    receivedAck = true;
+                case OpCodes.CreateServer:
+                    await userDbService.CreateServer(socketMessage.Message, user);
+                    break;
+                
+                case OpCodes.DeleteServer:
+                    await userDbService.DeleteServer(socketMessage.Message, user);
+                    break;
+                    
+                case OpCodes.JoinServer:
+                    await userDbService.JoinServer(socketMessage.Message, user);
+                    break;
+                
+                case OpCodes.LeaveServer:
+                    await userDbService.LeaveServer(socketMessage.Message, user);
                     break;
             }
         }

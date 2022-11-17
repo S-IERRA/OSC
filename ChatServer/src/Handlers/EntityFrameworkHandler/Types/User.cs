@@ -27,6 +27,9 @@ public class User : IEntityTypeConfiguration<User>
     
     public virtual List<Server> Servers { get; set; }
 
+    public static implicit operator int(User user) 
+        => user.Id;
+
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.Property(e => e.Id).ValueGeneratedOnAdd();

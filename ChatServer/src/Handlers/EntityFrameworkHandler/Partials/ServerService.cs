@@ -1,15 +1,22 @@
-﻿using ChatServer.Objects;
+﻿using ChatServer.Extensions;
+using ChatServer.Objects;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatServer.Handlers;
 
 public partial record AccountService
 {
-     public async Task CreateServer(CreateServerEvent createServerEvent, User user)
+     public async Task CreateServer(string? message, User user)
     {
+        if (!JsonHelper.TryDeserialize<CreateServerEvent>(message, out var createServerEvent))
+        {
+            await SocketUser.Send(OpCodes.InvalidRequest);
+            return;
+        }
+        
         if (createServerEvent.Name.Length is < 3 or > 27)
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, "Invalid server name length.");
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidServerNameLength);
 
             return;
         }
@@ -40,12 +47,23 @@ public partial record AccountService
         await SocketUser.Send(Events.ServerCreated, server);
     }
 
-    public async Task DeleteServer(Member owner, Server server)
+     public async Task DeleteServer(string? message, User user)
     {
-        if(server.Owner != owner.User)
+        if (!JsonHelper.TryDeserialize<DeleteServerEvent>(message, out var deleteServerEvent))
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, "You are not the owner of this server.");
+            await SocketUser.Send(OpCodes.InvalidRequest);
+            return;
+        }
+        
+        if (await Context.Servers.FirstOrDefaultAsync(x => x.Id == deleteServerEvent.ServerId) is not { } server)
+        {
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.ServerDoesNotExist);
+            return;
+        }
 
+        if(server.Owner.Id != user.Id)
+        {
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.NotOwner);
             return;
         }
         
@@ -56,27 +74,58 @@ public partial record AccountService
         await SocketUser.Send(Events.ServerLeft, server);
     }
 
-    public async Task JoinServer(string inviteCode, Member member)
+    public async Task JoinServer(string? message, User user)
     {
-        if (await Context.Servers.FindAsync(inviteCode) is not { } server)
+        if (!JsonHelper.TryDeserialize<JoinServerEvent>(message, out var joinServerEvent))
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, "Invalid invite code.");
-
+            await SocketUser.Send(OpCodes.InvalidRequest);
+            return;
+        }
+        
+        if (await Context.Servers.FindAsync(joinServerEvent.InviteCode) is not { } server)
+        {
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidInvite);
+            return;
+        }
+        
+        if (server.Members.Any(x => x.User.Id == user.Id))
+        {
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.AlreadyAMember);
             return;
         }
 
-        if (server.Members.Any(x => x.User == member.User))
-        {
-            await SocketUser.Send(OpCodes.InvalidRequest, "You are already a member of this server.");
-
-            return;
-        }
-
+        Member member = new() { Server = server, User = user };
         server.Members.Add(member);
 
         await Context.SaveChangesAsync();
 
         await SocketUser.Send(Events.ServerJoined, server);
+    }
+
+    public async Task LeaveServer(string? message, User user)
+    {
+        if (!JsonHelper.TryDeserialize<LeaveServerEvent>(message, out var leaveServerEvent))
+        {
+            await SocketUser.Send(OpCodes.InvalidRequest);
+            return;
+        }
+        
+        if (await Context.Servers.FirstOrDefaultAsync(x=>x.Id == leaveServerEvent.ServerId) is not { } server)
+        {
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.ServerDoesNotExist);
+            return;
+        }
+
+        if (server.Members.FirstOrDefault(x => x.User.Id == user.Id) is not { } member)
+        {
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.NotAMember);
+            return;
+        }
+
+        server.Members.Remove(member);
+        await Context.SaveChangesAsync();
+
+        await SocketUser.Send(Events.ServerLeft, server.Id);
     }
     
     //For the love of god rework these
