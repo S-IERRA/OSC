@@ -14,12 +14,12 @@ public class GZip
         bytes[3] = (byte)((length >> 24) & 0xFF);
         return bytes;
     }
-    
+
     public static int GetLength(byte[] bytes, int offset = 0)
     {
         return (bytes[offset + 0] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24));
     }
-    
+        
     public static byte[] Compress(string data)
     {
         byte[] length = GetLength(data.Length);
@@ -34,12 +34,20 @@ public class GZip
         }
         return ms.ToArray(); 
     }
-
-    public static string Decompress(byte[] compressedBytes)
+        
+    public static byte[] Decompress(MemoryStream data)
     {
-        using var memStream = new MemoryStream(compressedBytes);
-        using var gZip = new GZipStream(memStream, CompressionMode.Decompress);
-        using var reader = new StreamReader(gZip, Encoding.UTF8);
-        return reader.ReadToEnd();
+        using GZipStream zip = new GZipStream(data, CompressionMode.Decompress);
+        using MemoryStream outStream = new MemoryStream();
+            
+        byte[] buffer = new byte[4096];
+        int read;
+            
+        while ((read = zip.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            outStream.Write(buffer, 0, read);
+        }
+            
+        return outStream.ToArray();
     }
 }

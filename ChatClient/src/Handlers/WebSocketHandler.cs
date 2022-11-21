@@ -29,22 +29,31 @@ namespace ChatClient.Handlers
 
             for (;;)
             {           
-                using MemoryStream stream = new MemoryStream();
+                using MemoryStream dataStream = new MemoryStream();
                 
                 do
                 {
                     int received = await Client.ReceiveAsync(localBuffer, SocketFlags.None);
-                    stream.Write(localBuffer, 0, received);
-                } while (Client.Available > 0);
+                    dataStream.Write(localBuffer, 0, received);
+                } 
+                while (Client.Available > 0);
 
-                string data = GZip.Decompress(stream.ToArray());
-                if (!JsonHelper.TryDeserialize<WebSocketMessage>(data, out var socketMessage))
+                byte[] decompressedBytes = GZip.Decompress(dataStream);
+
+                for (int totalRead = 0; decompressedBytes.Length - totalRead > 0;)
                 {
-                    Console.WriteLine("Invalid message");
-                    continue;
-                }
+                    int length = GZip.GetLength(decompressedBytes, totalRead);
 
-                HandleOpcode(socketMessage);
+                    string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead += length + 4, length);
+
+                    if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
+                    {
+                        Console.WriteLine("Invalid message");
+                        continue;
+                    }
+
+                    HandleOpcode(socketMessage);
+                }
             }
         }
         

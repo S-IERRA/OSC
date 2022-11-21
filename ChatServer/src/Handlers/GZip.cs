@@ -52,15 +52,5 @@ namespace ChatServer.Handlers
             
             return outStream.ToArray();
         }
-        
-        /*
-        public static string Decompress(byte[] compressedBytes)
-        {
-            using var memStream = new MemoryStream(compressedBytes);
-            using var gZip = new GZipStream(memStream, CompressionMode.Decompress);
-            using var reader = new StreamReader(gZip, Encoding.UTF8);
-
-            return reader.ReadToEnd();
-        }*/
     }
 }
