@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -13,7 +14,7 @@ public class User : IEntityTypeConfiguration<User>
     public int Id { get; set; }
     
     public required string Username { get; set; }
-    public required string Password { get; set; }
+    [JsonIgnore] public string Password { get; set; }
     public required string Email    { get; set; }
     public string? Session { get; set; }
     
@@ -40,6 +41,11 @@ public class User : IEntityTypeConfiguration<User>
 
         builder.Property(e => e.Status).HasDefaultValue(Status.Offline);
     }
+}
+
+public class IdentifiedEvent
+{
+    public string Session { get; set; }
 }
 
 public enum Status

@@ -1,20 +1,28 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using ChatClient.Handlers;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 //Cachce system for msgs
 
 WebSocketHandler webSocket = new WebSocketHandler();
 
-string sonData = JsonConvert.SerializeObject(new LoginRegisterEvent
+string sonData = JsonSerializer.Serialize(new LoginRegisterEvent
 {
     Password = "testPassword123",
     //Username = "Iskra",
-    Email = "tesffft@mail.com"
+    Email = "tesfgft@mail.com"
 });
 
 await webSocket.Send(OpCodes.Identify, sonData);
+
+string jsonData = JsonSerializer.Serialize(new CreateServerEvent
+{
+    Name = "TestServer",
+    /*Icon = "https://cdn.discordapp.com/icons/123456789012345678/123456789012345678.png",*/
+});
+
+await webSocket.Send(OpCodes.CreateServer, jsonData);
 
 Thread.Sleep(-1);
 

@@ -35,7 +35,7 @@ namespace ChatServer.Handlers
             
             WebSocketMessage message = new WebSocketMessage(opCode, dataSerialized, eventType, default);
 
-            string messageSerialized = JsonSerializer.Serialize(message, Options);
+            string messageSerialized = JsonSerializer.Serialize(message);
             byte[] dataCompressed = GZip.Compress(messageSerialized);
 
             await UnderSocket.SendAsync(dataCompressed, SocketFlags.None);
@@ -50,12 +50,17 @@ namespace ChatServer.Handlers
         public async Task Send(OpCodes opCode, Events eventType) 
             => await SendData(opCode, eventType);
         
-        public async Task Send(OpCodes opCode, string? message) 
+        public async Task Send(OpCodes opCode, string message) 
             => await SendData(opCode, null, message);
 
+        private static JsonSerializerOptions _options = new JsonSerializerOptions()
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.Always
+        };
+        
         public async Task Send(OpCodes opCode, object message)
         {
-            string jsonMessage = JsonSerializer.Serialize(message);
+            string jsonMessage = JsonSerializer.Serialize(message, _options);
             
             await SendData(opCode, null, jsonMessage);
         }

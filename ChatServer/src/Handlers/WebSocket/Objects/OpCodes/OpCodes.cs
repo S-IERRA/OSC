@@ -37,6 +37,8 @@
     //Todo: Organise these
     public static class ErrorMessages
     {
+        public const string MalformedJson = "Malformed JSON.";
+        
         public const string InvalidServerNameLength = "Invalid server name length.";
         public const string NotOwner = "You need to be the owner of this server to delete it.";
         public const string InvalidInvite = "Invalid server invite code.";

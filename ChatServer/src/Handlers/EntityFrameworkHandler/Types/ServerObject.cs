@@ -5,8 +5,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
 
+//Convert to combined key
 public class Invite : IEntityTypeConfiguration<Invite>
 {
+    public int Id { get; set; }
+
     public int ServerId { get; set; }
     public string InviteCode { get; set; }
 
@@ -51,8 +54,11 @@ public class Server : IEntityTypeConfiguration<Server>
     }
 }
 
+//Remove id convert to combined key
 public class Member : IEntityTypeConfiguration<Member>
 {
+    public int Id { get; set; }
+
     private int userId;
     private int serverId;
     

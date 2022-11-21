@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using ChatServer.Objects;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,7 +8,7 @@ namespace ChatServer.Handlers;
 
 public partial record AccountService
 {
-      public async Task Register(LoginRegisterEvent registerEvent)
+    public async Task Register(LoginRegisterEvent registerEvent)
     {
         if (registerEvent is { Username: null } or {Email: null})
         {
@@ -45,7 +47,7 @@ public partial record AccountService
 
         await SocketUser.Send(Events.Registered);
     }
-    
+
     public async Task Login(LoginRegisterEvent loginEvent)
     {
         if (await Context.Users.SingleOrDefaultAsync(x => x.Email == loginEvent.Email && x.Password == loginEvent.Password) 
@@ -63,7 +65,9 @@ public partial record AccountService
         SocketUser.IsIdentified = true;
 
         //Don't send the full User object 
+
         await SocketUser.Send(Events.Identified, userSession);
+        Console.WriteLine("LOGGED IN");
     }
 
     public async Task Login(string session)

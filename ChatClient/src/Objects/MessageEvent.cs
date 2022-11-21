@@ -10,8 +10,4 @@ public enum EventType
     Null
 }
 
-public record MessageEvent(
-    [JsonProperty("op")]    OpCodes OpCode,
-    [JsonProperty("data")]  string? Message,
-    [JsonProperty("event")] Events? EventType,
-    [JsonProperty("session")] string Session = "");
+public record WebSocketMessage(OpCodes OpCode, string? Message, Events? EventType, string? Session); //uint       Sequence);

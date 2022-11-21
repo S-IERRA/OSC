@@ -6,13 +6,22 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+using System.Text.Json;
+using ChatServer.Extensions;
 
 namespace ChatClient.Handlers
 {
+    public class CreateServerEvent
+    { 
+        public string Name { get; set; }
+    }
+
     public class WebSocketHandler
     {
         private static readonly Socket Client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        
+        //Move this to a user config file
+        public static string _userSession = "";
 
         private async void ReceiveMessages()
         {
@@ -28,20 +37,18 @@ namespace ChatClient.Handlers
                     stream.Write(localBuffer, 0, received);
                 } while (Client.Available > 0);
 
-                string data = GZip.Decompress(stream);
-                MessageEvent? message = JsonConvert.DeserializeObject<MessageEvent>(data);
-                
-                if (message is null)
+                string data = GZip.Decompress(stream.ToArray());
+                if (!JsonHelper.TryDeserialize<WebSocketMessage>(data, out var socketMessage))
                 {
-                    Console.WriteLine("[CLIENT] Invalid Message");
-                    return;
+                    Console.WriteLine("Invalid message");
+                    continue;
                 }
 
-                HandleOpcode(message);
+                HandleOpcode(socketMessage);
             }
         }
         
-        private async Task HandleOpcode(MessageEvent messageEvent)
+        private async Task HandleOpcode(WebSocketMessage messageEvent)
         {
             switch (messageEvent.OpCode)
             {
@@ -69,7 +76,14 @@ namespace ChatClient.Handlers
                     switch (messageEvent.EventType)
                     {
                         case Events.Identified:
-                            Console.WriteLine("Identified");
+                            if (!JsonHelper.TryDeserialize<User>(messageEvent.Message, out var userAccount))
+                            {
+                                Console.WriteLine("invalid json");
+                                break;
+                            }
+
+                            _userSession = userAccount.Session;
+                            Console.WriteLine("test");
                             break;
 
                         case Events.LoggedOut:
@@ -88,26 +102,50 @@ namespace ChatClient.Handlers
 
         public WebSocketHandler()
         {
+            Client.DontFragment = true;
             Client.Connect(IPAddress.Parse("127.0.0.1"), 8787);
             ReceiveMessages();
         }
 
-        public async Task Send(OpCodes opCode, string data = "", Events? eventType = Events.Null)
+        private int index = 0;
+        
+        private async Task SendData(OpCodes opCode, Events? eventType = null, string? dataSerialized = default)
         {
-            string serialized = JsonConvert.SerializeObject(new MessageEvent(opCode, data, eventType));
-
-            byte[] dataCompressed = GZip.Compress(serialized);
+            if (!Client.Connected)
+                return;
             
+            WebSocketMessage message = new WebSocketMessage(opCode, dataSerialized, eventType, _userSession);
+
+            string messageSerialized = JsonSerializer.Serialize(message);
+            byte[] dataCompressed = GZip.Compress(messageSerialized);
+
             await Client.SendAsync(dataCompressed, SocketFlags.None);
         }
-        
-        public async Task Send(Events eventName, string data = "")
-        {
-            string serialized = JsonConvert.SerializeObject(new MessageEvent(OpCodes.Event, data, eventName));
 
-            byte[] dataCompressed = GZip.Compress(serialized);
+        public async Task Send(OpCodes opCode) 
+            => await SendData(opCode);
+        
+        public async Task Send(Events eventType)
+            => await SendData(OpCodes.Event, eventType);
+        
+        public async Task Send(OpCodes opCode, Events eventType) 
+            => await SendData(opCode, eventType);
+        
+        public async Task Send(OpCodes opCode, string? message) 
+            => await SendData(opCode, null, message);
+
+        public async Task Send(OpCodes opCode, object message)
+        {
+            string jsonMessage = JsonSerializer.Serialize(message);
             
-            await Client.SendAsync(dataCompressed, SocketFlags.None);
+            await SendData(opCode, null, jsonMessage);
+        }
+        
+        public async Task Send(Events eventType, object message)
+        { 
+            string jsonMessage = JsonSerializer.Serialize(message);
+            
+            await SendData(OpCodes.Event, eventType, jsonMessage);
         }
     }
 }

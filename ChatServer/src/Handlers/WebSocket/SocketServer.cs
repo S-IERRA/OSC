@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ChatServer.Handlers;
 
 //Todo: in V2 remove some of the null checks replace with Empty statements
+//Todo: clean this up in v2, get pre-alpha working
 public class SocketServer2 : IDisposable
 {
     private static readonly Factory Factory = new Factory();
@@ -52,9 +53,9 @@ public class SocketServer2 : IDisposable
     {
         EntityFramework2 context = Factory.CreateDbContext();
         AccountService userDbService = new(context, socketUser);
-
-        byte[] localBuffer = new byte[512];
         
+        byte[] localBuffer = new byte[512];
+
         bool isTimedOut = false,
             receivedAck = false;
 
@@ -68,7 +69,7 @@ public class SocketServer2 : IDisposable
                     
                 Console.WriteLine("[HEARTBEAT] Sent Heartbeat");
 
-                DateTimeOffset nextAck = DateTimeOffset.Now + TimeSpan.FromSeconds(5);
+                DateTimeOffset nextAck = DateTimeOffset.Now + TimeSpan.FromSeconds(10);
 
                 while (GetCurrentTime < nextAck)
                 {
@@ -85,7 +86,8 @@ public class SocketServer2 : IDisposable
 
                     await socketUser.Send(OpCodes.ConnectionClosed);
                     socketUser.Dispose();
-                        
+
+                    Console.WriteLine("Connection closed");
                     return;
                 }
                     
@@ -105,7 +107,7 @@ public class SocketServer2 : IDisposable
             }
         }
 
-        _ = Task.Run(HeartBeat, Cts.Token);
+        //_ = Task.Run(HeartBeat, Cts.Token);
         
         //Receive Data
 
@@ -116,17 +118,37 @@ public class SocketServer2 : IDisposable
 
             using MemoryStream dataStream = new();
 
+            /*
             do
             {
-                int received = await socketUser.UnderSocket.ReceiveAsync(localBuffer, SocketFlags.None);
+                int received = socketUser.UnderSocket.Receive(localBuffer, SocketFlags.None);
+                Console.WriteLine(received);
 
                 dataStream.Write(localBuffer, 0, received);
-            } while (socketUser.UnderSocket.Available > 0);
+            } 
+            while (socketUser.UnderSocket.Available > 0);*/
+            
+            //Block reading
+            int totalReceived = socketUser.UnderSocket.Receive(localBuffer, SocketFlags.None);
+            dataStream.Write(localBuffer, 0, totalReceived);
 
-            string rawMessage = Encoding.UTF8.GetString(dataStream.ToArray()); //Utilise Gzip decompression
+            byte[] decompressedBytes = GZip.Decompress(dataStream.ToArray());
+            int length = GZip.GetLength(decompressedBytes);
+            int length2 = GZip.GetLength(decompressedBytes, length + 4);
+
+            string data = Encoding.UTF8.GetString(decompressedBytes, 4, length);
+            string data2 = Encoding.UTF8.GetString(decompressedBytes, length + 8, length2);
+            
+            Console.WriteLine(data);
+            Console.WriteLine(data2);
+
+            continue;
+            string rawMessage = "";
+
             if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
             {
-                await socketUser.Send(OpCodes.InvalidRequest);
+                await socketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MalformedJson);
+                Console.WriteLine("Malformed Json");
                 continue;
             }
 
@@ -141,19 +163,19 @@ public class SocketServer2 : IDisposable
             {
                 if (!JsonHelper.TryDeserialize<LoginRegisterEvent>(socketMessage.Message, out var lrEvent))
                 {
-                    await socketUser.Send(OpCodes.InvalidRequest);
-                    break;
+                    await socketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MalformedJson);
+                    continue;
                 }
 
                 switch (socketMessage.OpCode)
                 {
                     case OpCodes.Identify:
                         await userDbService.Login(lrEvent);
-                        break;
+                        continue;
 
                     case OpCodes.Register:
                         await userDbService.Register(lrEvent);
-                        break;
+                        continue;
                 }
             }
             
@@ -172,19 +194,19 @@ public class SocketServer2 : IDisposable
             {
                 case OpCodes.CreateServer:
                     await userDbService.CreateServer(socketMessage.Message, user);
-                    break;
+                    continue;
                 
                 case OpCodes.DeleteServer:
                     await userDbService.DeleteServer(socketMessage.Message, user);
-                    break;
+                    continue;
                     
                 case OpCodes.JoinServer:
                     await userDbService.JoinServer(socketMessage.Message, user);
-                    break;
+                    continue;
                 
                 case OpCodes.LeaveServer:
                     await userDbService.LeaveServer(socketMessage.Message, user);
-                    break;
+                    continue;
             }
         }
     }
