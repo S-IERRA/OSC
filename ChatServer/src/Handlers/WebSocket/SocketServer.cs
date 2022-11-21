@@ -118,95 +118,84 @@ public class SocketServer2 : IDisposable
 
             using MemoryStream dataStream = new();
 
-            /*
             do
             {
-                int received = socketUser.UnderSocket.Receive(localBuffer, SocketFlags.None);
-                Console.WriteLine(received);
-
-                dataStream.Write(localBuffer, 0, received);
-            } 
-            while (socketUser.UnderSocket.Available > 0);*/
-            
-            //Block reading
-            int totalReceived = socketUser.UnderSocket.Receive(localBuffer, SocketFlags.None);
-            dataStream.Write(localBuffer, 0, totalReceived);
-
-            byte[] decompressedBytes = GZip.Decompress(dataStream.ToArray());
-            int length = GZip.GetLength(decompressedBytes);
-            int length2 = GZip.GetLength(decompressedBytes, length + 4);
-
-            string data = Encoding.UTF8.GetString(decompressedBytes, 4, length);
-            string data2 = Encoding.UTF8.GetString(decompressedBytes, length + 8, length2);
-            
-            Console.WriteLine(data);
-            Console.WriteLine(data2);
-
-            continue;
-            string rawMessage = "";
-
-            if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
-            {
-                await socketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MalformedJson);
-                Console.WriteLine("Malformed Json");
-                continue;
+                int totalReceived = socketUser.UnderSocket.Receive(localBuffer, SocketFlags.None);
+                dataStream.Write(localBuffer, 0, totalReceived);
             }
+            while (socketUser.UnderSocket.Available > 0);
 
-            //This opcode handling is a bit fucking wack
-            if (socketMessage.OpCode == OpCodes.HeartBeatAck)
-            {
-                receivedAck = true;
-                continue;
-            }
+            byte[] decompressedBytes = GZip.Decompress(dataStream);
 
-            if (!socketUser.IsIdentified)
+            for (int totalRead = 0; decompressedBytes.Length - totalRead > 0;)
             {
-                if (!JsonHelper.TryDeserialize<LoginRegisterEvent>(socketMessage.Message, out var lrEvent))
+                int length = GZip.GetLength(decompressedBytes, totalRead);
+                
+                string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead += length + 4, length);
+
+                if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
                 {
                     await socketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MalformedJson);
+                    Console.WriteLine("Malformed Json");
                     continue;
                 }
 
+                //This opcode handling is a bit fucking wack
+                if (socketMessage.OpCode == OpCodes.HeartBeatAck)
+                {
+                    receivedAck = true;
+                    continue;
+                }
+
+                if (!socketUser.IsIdentified)
+                {
+                    if (!JsonHelper.TryDeserialize<LoginRegisterEvent>(socketMessage.Message, out var lrEvent))
+                    {
+                        await socketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MalformedJson);
+                        continue;
+                    }
+
+                    switch (socketMessage.OpCode)
+                    {
+                        case OpCodes.Identify:
+                            await userDbService.Login(lrEvent);
+                            continue;
+
+                        case OpCodes.Register:
+                            await userDbService.Register(lrEvent);
+                            continue;
+                    }
+                }
+
+                //Get user by session
+                //This seems quite inefficient as we are querying the database fore each request
+                if (await context.Users.FirstOrDefaultAsync(x => x.Session == socketMessage.Session) is not { } user)
+                {
+                    await socketUser.Send(OpCodes.InvalidRequest, "Invalid session");
+                    continue;
+                }
+
+                //Todo: Check permissions
+                //Todo: clean this up
+                //Todo: possibly move messga and user to AccountService?
                 switch (socketMessage.OpCode)
                 {
-                    case OpCodes.Identify:
-                        await userDbService.Login(lrEvent);
+                    case OpCodes.CreateServer:
+                        await userDbService.CreateServer(socketMessage.Message, user);
                         continue;
 
-                    case OpCodes.Register:
-                        await userDbService.Register(lrEvent);
+                    case OpCodes.DeleteServer:
+                        await userDbService.DeleteServer(socketMessage.Message, user);
+                        continue;
+
+                    case OpCodes.JoinServer:
+                        await userDbService.JoinServer(socketMessage.Message, user);
+                        continue;
+
+                    case OpCodes.LeaveServer:
+                        await userDbService.LeaveServer(socketMessage.Message, user);
                         continue;
                 }
-            }
-            
-            //Get user by session
-            //This seems quite inefficient as we are querying the database fore each request
-            if (await context.Users.FirstOrDefaultAsync(x => x.Session == socketMessage.Session) is not { } user)
-            {
-                await socketUser.Send(OpCodes.InvalidRequest, "Invalid session");
-                continue;
-            }
-            
-            //Todo: Check permissions
-            //Todo: clean this up
-            //Todo: possibly move messga and user to AccountService?
-            switch (socketMessage.OpCode)
-            {
-                case OpCodes.CreateServer:
-                    await userDbService.CreateServer(socketMessage.Message, user);
-                    continue;
-                
-                case OpCodes.DeleteServer:
-                    await userDbService.DeleteServer(socketMessage.Message, user);
-                    continue;
-                    
-                case OpCodes.JoinServer:
-                    await userDbService.JoinServer(socketMessage.Message, user);
-                    continue;
-                
-                case OpCodes.LeaveServer:
-                    await userDbService.LeaveServer(socketMessage.Message, user);
-                    continue;
             }
         }
     }

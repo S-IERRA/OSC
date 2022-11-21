@@ -15,9 +15,9 @@ public class GZip
         return bytes;
     }
     
-    private static int GetLength(byte[] bytes)
+    public static int GetLength(byte[] bytes, int offset = 0)
     {
-        return (bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24));
+        return (bytes[offset + 0] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24));
     }
     
     public static byte[] Compress(string data)

@@ -37,10 +37,9 @@ namespace ChatServer.Handlers
             return ms.ToArray(); 
         }
         
-        public static byte[] Decompress(byte[] data)
+        public static byte[] Decompress(MemoryStream data)
         {
-            using MemoryStream ms = new MemoryStream(data);
-            using GZipStream zip = new GZipStream(ms, CompressionMode.Decompress);
+            using GZipStream zip = new GZipStream(data, CompressionMode.Decompress);
             using MemoryStream outStream = new MemoryStream();
             
             byte[] buffer = new byte[4096];

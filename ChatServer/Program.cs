@@ -1,4 +1,6 @@
-﻿using ChatServer.Handlers;
+﻿using System.Net.NetworkInformation;
+using System.Text;
+using ChatServer.Handlers;
 
 /*
 Factory factory = new Factory();
@@ -9,7 +11,10 @@ await ctx.Database.EnsureCreatedAsync();*/
 
 //AccountService ac = new AccountService();
 
+/*
 SocketServer2 server = new();
-await server.Start();
+await server.Start();*/
+
+
 
 Thread.Sleep(-1);
