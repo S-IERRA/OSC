@@ -11,10 +11,7 @@ await ctx.Database.EnsureCreatedAsync();*/
 
 //AccountService ac = new AccountService();
 
-/*
 SocketServer2 server = new();
-await server.Start();*/
-
-
+await server.Start();
 
 Thread.Sleep(-1);

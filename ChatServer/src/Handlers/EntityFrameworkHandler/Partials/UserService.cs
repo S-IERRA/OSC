@@ -58,12 +58,14 @@ public partial record AccountService
             return;
         }
 
-        userSession.Session = RandomImpl.RandomString(24);
+        string session = Guid.NewGuid().ToString();
 
-        await Context.SaveChangesAsync();
-
+        userSession.Session = session;
+        SocketUser.SessionId = session;
         SocketUser.IsIdentified = true;
 
+        await Context.SaveChangesAsync();
+        
         //Don't send the full User object 
 
         await SocketUser.Send(Events.Identified, userSession);

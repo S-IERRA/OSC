@@ -38,13 +38,14 @@ namespace ChatClient.Handlers
                 } 
                 while (Client.Available > 0);
 
-                byte[] decompressedBytes = GZip.Decompress(dataStream);
+                byte[] decompressedBytes = GZip.Decompress(dataStream.ToArray());
 
                 for (int totalRead = 0; decompressedBytes.Length - totalRead > 0;)
                 {
                     int length = GZip.GetLength(decompressedBytes, totalRead);
 
-                    string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead += length + 4, length);
+                    string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 4, length);
+                    totalRead += length + 4;
 
                     if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
                     {
@@ -92,7 +93,7 @@ namespace ChatClient.Handlers
                             }
 
                             _userSession = userAccount.Session;
-                            Console.WriteLine("test");
+                            Console.WriteLine(_userSession);
                             break;
 
                         case Events.LoggedOut:
@@ -101,6 +102,11 @@ namespace ChatClient.Handlers
 
                         case Events.Registered:
                             Console.WriteLine("Registered");
+                            break;
+                        
+                        case Events.ServerCreated:
+                            Console.WriteLine("Server created");
+                            Console.WriteLine(messageEvent.Message);
                             break;
                     }
 
@@ -126,6 +132,7 @@ namespace ChatClient.Handlers
             WebSocketMessage message = new WebSocketMessage(opCode, dataSerialized, eventType, _userSession);
 
             string messageSerialized = JsonSerializer.Serialize(message);
+            Console.WriteLine(messageSerialized);
             byte[] dataCompressed = GZip.Compress(messageSerialized);
 
             await Client.SendAsync(dataCompressed, SocketFlags.None);

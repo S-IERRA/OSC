@@ -120,18 +120,19 @@ public class SocketServer2 : IDisposable
 
             do
             {
-                int totalReceived = socketUser.UnderSocket.Receive(localBuffer, SocketFlags.None);
+                int totalReceived = await socketUser.UnderSocket.ReceiveAsync(localBuffer, SocketFlags.None);
                 dataStream.Write(localBuffer, 0, totalReceived);
             }
             while (socketUser.UnderSocket.Available > 0);
 
-            byte[] decompressedBytes = GZip.Decompress(dataStream);
+            byte[] decompressedBytes = GZip.Decompress(dataStream.ToArray());
 
             for (int totalRead = 0; decompressedBytes.Length - totalRead > 0;)
             {
                 int length = GZip.GetLength(decompressedBytes, totalRead);
                 
-                string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead += length + 4, length);
+                string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 4, length);
+                totalRead += length + 4;
 
                 if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
                 {
@@ -139,11 +140,13 @@ public class SocketServer2 : IDisposable
                     Console.WriteLine("Malformed Json");
                     continue;
                 }
-
+                
                 //This opcode handling is a bit fucking wack
+                //Rewrite this fucking mess
                 if (socketMessage.OpCode == OpCodes.HeartBeatAck)
                 {
                     receivedAck = true;
+                    Console.WriteLine("[HEARTBEAT] Received Heartbeat Ack");
                     continue;
                 }
 
@@ -167,9 +170,10 @@ public class SocketServer2 : IDisposable
                     }
                 }
 
+                string? sessionToken = socketUser.SessionId ?? socketMessage.Session;
                 //Get user by session
                 //This seems quite inefficient as we are querying the database fore each request
-                if (await context.Users.FirstOrDefaultAsync(x => x.Session == socketMessage.Session) is not { } user)
+                if (await context.Users.FirstOrDefaultAsync(x => x.Session == sessionToken) is not { } user)
                 {
                     await socketUser.Send(OpCodes.InvalidRequest, "Invalid session");
                     continue;
@@ -177,7 +181,7 @@ public class SocketServer2 : IDisposable
 
                 //Todo: Check permissions
                 //Todo: clean this up
-                //Todo: possibly move messga and user to AccountService?
+                //Todo: possibly move message and user to AccountService?
                 switch (socketMessage.OpCode)
                 {
                     case OpCodes.CreateServer:

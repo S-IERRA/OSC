@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using K4os.Compression.LZ4.Internal;
 
 namespace ChatServer.Handlers
 {
@@ -29,25 +30,27 @@ namespace ChatServer.Handlers
         
             byte[] prepended = length.Concat(dataBytes).ToArray();
         
-            using MemoryStream ms = new MemoryStream();
-            using (GZipStream zip = new GZipStream(ms, CompressionMode.Compress, true))
+            using MemoryStream ms = new();
+            using (GZipStream zip = new(ms, CompressionMode.Compress, true))
             {
                 zip.Write(prepended, 0, prepended.Length);
             }
+            
             return ms.ToArray(); 
         }
-        
-        public static byte[] Decompress(MemoryStream data)
+
+        public static byte[] Decompress(byte[] inBytes)
         {
-            using GZipStream zip = new GZipStream(data, CompressionMode.Decompress);
-            using MemoryStream outStream = new MemoryStream();
+            using MemoryStream inStream = new(inBytes);
+            using GZipStream zip = new(inStream, CompressionMode.Decompress);
+            using MemoryStream outStream = new();
             
             byte[] buffer = new byte[4096];
             int read;
             
             while ((read = zip.Read(buffer, 0, buffer.Length)) > 0)
             {
-                outStream.Write(buffer, 0, read);
+                outStream.WriteAsync(buffer, 0, read);
             }
             
             return outStream.ToArray();
