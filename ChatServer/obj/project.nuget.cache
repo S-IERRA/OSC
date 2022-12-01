@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "CkcvifKyePsymOIMgR+gaXV5TToA32QWGIkBM8tIsDj5EN9WGT2nIleKpxQlZxNa3iHMChos3j7eAkMxTODU2Q==",
+  "dgSpecHash": "b0SmbIEzoSiuigzYindQN7VuW0e8VP7CGwWcgTJmKiCXh20QETokf+9N5RnOr8yAabGIiVMG6SMSjaQm/Gr4mw==",
   "success": true,
   "projectFilePath": "D:\\projects\\V-ARS\\OSC\\ChatServer\\ChatServer.csproj",
   "expectedPackageFiles": [
@@ -43,6 +43,12 @@
     "C:\\Users\\someOne\\.nuget\\packages\\runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl\\4.3.2\\runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
     "C:\\Users\\someOne\\.nuget\\packages\\runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl\\4.3.2\\runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
     "C:\\Users\\someOne\\.nuget\\packages\\runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl\\4.3.2\\runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "C:\\Users\\someOne\\.nuget\\packages\\serilog\\2.12.1-dev-01594\\serilog.2.12.1-dev-01594.nupkg.sha512",
+    "C:\\Users\\someOne\\.nuget\\packages\\serilog.formatting.compact\\1.1.0\\serilog.formatting.compact.1.1.0.nupkg.sha512",
+    "C:\\Users\\someOne\\.nuget\\packages\\serilog.sinks.console\\4.1.1-dev-00896\\serilog.sinks.console.4.1.1-dev-00896.nupkg.sha512",
+    "C:\\Users\\someOne\\.nuget\\packages\\serilog.sinks.file\\5.0.0\\serilog.sinks.file.5.0.0.nupkg.sha512",
+    "C:\\Users\\someOne\\.nuget\\packages\\serilog.sinks.periodicbatching\\3.1.0\\serilog.sinks.periodicbatching.3.1.0.nupkg.sha512",
+    "C:\\Users\\someOne\\.nuget\\packages\\serilog.sinks.seq\\5.2.3-dev-00260\\serilog.sinks.seq.5.2.3-dev-00260.nupkg.sha512",
     "C:\\Users\\someOne\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
     "C:\\Users\\someOne\\.nuget\\packages\\system.collections\\4.3.0\\system.collections.4.3.0.nupkg.sha512",
     "C:\\Users\\someOne\\.nuget\\packages\\system.collections.concurrent\\4.3.0\\system.collections.concurrent.4.3.0.nupkg.sha512",

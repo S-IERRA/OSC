@@ -13,6 +13,9 @@
       <PackageReference Include="MySql.Data" Version="8.0.29" />
       <PackageReference Include="Npgsql" Version="7.0.0-preview.7" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.6" />
+      <PackageReference Include="Serilog" Version="2.12.1-dev-01594" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="4.1.1-dev-00896" />
+      <PackageReference Include="Serilog.Sinks.Seq" Version="5.2.3-dev-00260" />
       <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="7.0.0-preview.3.22175.4" />
       <PackageReference Include="System.Net.Http" Version="4.3.4" />
     </ItemGroup>

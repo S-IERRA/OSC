@@ -5,6 +5,8 @@ using ChatServer.Extensions;
 using ChatServer.Objects;
 using Microsoft.EntityFrameworkCore;
 
+using Serilog;
+
 namespace ChatServer.Handlers;
 
 //Todo: in V2 remove some of the null checks replace with Empty statements
@@ -27,23 +29,35 @@ public class SocketServer2 : IDisposable
     
     public async Task Start()
     {
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .WriteTo.Seq("http://localhost:5341/")
+            .CreateLogger();
+        
         Listener.Bind(EndPoint);
         Listener.Listen(32);
         
-        _state = SocketState.Connected;
+        Log.Information("Server started");
 
+        _state = SocketState.Connected;
+        
         while (CanRun())
         {
-            Socket newClient = await Listener.AcceptAsync(Cts.Token);
-            SocketUser socketUser = new SocketUser(newClient);
+            Socket socket = await Listener.AcceptAsync();
+            EndPoint?  ip = socket.RemoteEndPoint;
 
-            /*todo: CRITICAL: Host can have more than 1 session resulting in a crash due to hashmap only supporting 1 of the same input
-             This is specifically a large issue when a user wants a local hosted bot or alt account to be able to connect to the server
-            if (newClient.RemoteEndPoint is not null) 
-                ConnectedIps.Add(newClient.RemoteEndPoint);
-                */
+            SocketUser socketUser = new SocketUser(socket);
             
-            Console.WriteLine("[SERVER] Accepted new connection");
+            if (ip == null || ConnectedIps.Contains(ip))
+            {
+                socket.Close();
+                continue;
+            }
+            
+            ConnectedIps.Add(ip);
+            
+            Log.Information($"New connection from {ip}");
             
             _ = Task.Run(() => VirtualUserHandler(socketUser), socketUser.UserCancellation.Token);
         }
@@ -136,8 +150,9 @@ public class SocketServer2 : IDisposable
 
                 if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
                 {
-                    await socketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MalformedJson);
-                    Console.WriteLine("Malformed Json");
+                    await socketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MalformedJson); 
+                    
+                    Log.Warning($"Malformed Json: {rawMessage}");
                     continue;
                 }
                 
@@ -146,7 +161,6 @@ public class SocketServer2 : IDisposable
                 if (socketMessage.OpCode == OpCodes.HeartBeatAck)
                 {
                     receivedAck = true;
-                    Console.WriteLine("[HEARTBEAT] Received Heartbeat Ack");
                     continue;
                 }
 
@@ -155,6 +169,8 @@ public class SocketServer2 : IDisposable
                     if (!JsonHelper.TryDeserialize<LoginRegisterEvent>(socketMessage.Message, out var lrEvent))
                     {
                         await socketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MalformedJson);
+                        
+                        Log.Warning($"Malformed Login Register Json: {socketMessage.Message}");
                         continue;
                     }
 

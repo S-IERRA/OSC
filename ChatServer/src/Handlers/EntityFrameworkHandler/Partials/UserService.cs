@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using ChatServer.Objects;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace ChatServer.Handlers;
 
@@ -44,8 +45,9 @@ public partial record AccountService
         });
 
         await Context.SaveChangesAsync();
-
         await SocketUser.Send(Events.Registered);
+        
+        Log.Information($"Ip {SocketUser.UnderSocket.RemoteEndPoint} registered");
     }
 
     public async Task Login(LoginRegisterEvent loginEvent)
@@ -65,11 +67,9 @@ public partial record AccountService
         SocketUser.IsIdentified = true;
 
         await Context.SaveChangesAsync();
-        
-        //Don't send the full User object 
-
         await SocketUser.Send(Events.Identified, userSession);
-        Console.WriteLine("LOGGED IN");
+        
+        Log.Information($"User {userSession.Email} Logged in");
     }
 
     public async Task Login(string session)
@@ -88,6 +88,8 @@ public partial record AccountService
         SocketUser.IsIdentified = true;
 
         await SocketUser.Send(Events.Identified, userSession);
+        
+        Log.Information($"Ip {SocketUser.UnderSocket.RemoteEndPoint} Logged into account {userSession.Email}");
     }
 
     public async Task LogOut()
@@ -96,11 +98,11 @@ public partial record AccountService
             return;
         
         SocketUser.SessionId = null;
-
-        await Context.SaveChangesAsync();
-
         SocketUser.IsIdentified = false;
 
+        await Context.SaveChangesAsync();
         await SocketUser.Send(Events.LoggedOut);
+        
+        Log.Information($"Ip {SocketUser.UnderSocket.RemoteEndPoint} Logged out");
     }
 }

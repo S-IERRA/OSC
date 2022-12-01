@@ -2,6 +2,8 @@
 using System.Text;
 using System.Text.Json;
 
+using Serilog;
+
 namespace ChatServer.Extensions;
 
 public class SnakeCase : JsonNamingPolicy
@@ -48,8 +50,9 @@ public static class JsonHelper
             result = JsonSerializer.Deserialize<TClass>(message)!;
             return true;
         }
-        catch
+        catch(Exception e)
         {
+            Log.Error(e.Message);
             return false;
         }
     }

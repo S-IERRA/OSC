@@ -1,6 +1,7 @@
 ﻿using ChatServer.Extensions;
 using ChatServer.Objects;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace ChatServer.Handlers;
 
@@ -43,8 +44,9 @@ public partial record AccountService
         Context.Servers.Add(server);
 
         await Context.SaveChangesAsync();
-
         await SocketUser.Send(Events.ServerCreated, server);
+        
+        Log.Information($"Server {server.Name} created by {user.Username}");
     }
 
      public async Task DeleteServer(string? message, User user)
@@ -68,10 +70,11 @@ public partial record AccountService
         }
         
         Context.Servers.Remove(server);
-        
+
         await Context.SaveChangesAsync();
-        
         await SocketUser.Send(Events.ServerLeft, server);
+        
+        Log.Information($"Server {server.Name} deleted by {user.Username}");
     }
 
     public async Task JoinServer(string? message, User user)
@@ -82,12 +85,12 @@ public partial record AccountService
             return;
         }
         
-        if (await Context.Servers.FindAsync(joinServerEvent.InviteCode) is not { } server)
+        if (await Context.Servers.FirstOrDefaultAsync(x => x.InviteCodes.Any(h => h.InviteCode == joinServerEvent.InviteCode)) is not { } server)
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidInvite);
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.ServerDoesNotExist);
             return;
         }
-        
+
         if (server.Members.Any(x => x.User.Id == user.Id))
         {
             await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.AlreadyAMember);
@@ -98,8 +101,9 @@ public partial record AccountService
         server.Members.Add(member);
 
         await Context.SaveChangesAsync();
-
         await SocketUser.Send(Events.ServerJoined, server);
+        
+        Log.Information($"User {user.Username} joined server {server.Name}");
     }
 
     public async Task LeaveServer(string? message, User user)
@@ -123,9 +127,11 @@ public partial record AccountService
         }
 
         server.Members.Remove(member);
+        
         await Context.SaveChangesAsync();
-
         await SocketUser.Send(Events.ServerLeft, server.Id);
+        
+        Log.Information($"User {user.Username} left server {server.Name}");
     }
     
     //For the love of god rework these
