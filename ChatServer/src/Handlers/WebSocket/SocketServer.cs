@@ -171,7 +171,9 @@ public class SocketServer2 : IDisposable
                     }
                 }
 
+                //Potentially huge vulnerability due to ip spoofing
                 string? sessionToken = socketUser.SessionId ?? socketMessage.Session;
+                
                 //Get user by session
                 //This seems quite inefficient as we are querying the database fore each request
                 if (await context.Users.FirstOrDefaultAsync(x => x.Session == sessionToken) is not { } user)

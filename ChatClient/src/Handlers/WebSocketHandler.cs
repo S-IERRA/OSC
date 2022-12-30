@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json;
+using ChatClient.Types;
 using ChatServer.Extensions;
 
 namespace ChatClient.Handlers
@@ -19,7 +20,7 @@ namespace ChatClient.Handlers
     //Todo: implement replies to send method
     public class WebSocketHandler
     {
-        private static readonly Socket Client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        private static readonly Socket Client = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         
         //Move this to a user config file
         public static string _userSession = "";
