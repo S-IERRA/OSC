@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using ChatServer.Handlers.Cryptography;
 using ChatServer.Objects;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -11,7 +12,7 @@ public partial record AccountService
 {
     public async Task Register(LoginRegisterEvent registerEvent)
     {
-        if (registerEvent is { Username: null } or {Email: null})
+        if (registerEvent is { Username: null } or { Email: null })
         {
             await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MissingFields);
             return;
@@ -37,44 +38,48 @@ public partial record AccountService
             return;
         }
 
+        string hashedPassword = Pbkdf2.CreateHash(registerEvent.Password);
+
         Context.Users.Add(new User()
         {
             Email = registerEvent.Email,
-            Password = registerEvent.Password,
+            Password = hashedPassword,
             Username = registerEvent.Username,
         });
 
         await Context.SaveChangesAsync();
         await SocketUser.Send(Events.Registered);
-        
+
         Log.Information($"Ip {SocketUser.UnderSocket.RemoteEndPoint} registered");
     }
 
     public async Task Login(LoginRegisterEvent loginEvent)
     {
-        if (await Context.Users.SingleOrDefaultAsync(x => x.Email == loginEvent.Email && x.Password == loginEvent.Password) 
-            is not { } userSession)
+        User? user = await Context.Users
+            .Where(u => u.Email == loginEvent.Email)
+            .FirstOrDefaultAsync();
+
+        if (user is null || !Pbkdf2.ValidatePassword(loginEvent.Password, user.Password))
         {
             await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidUserOrPass);
-
             return;
         }
 
         string session = Guid.NewGuid().ToString();
 
-        userSession.Session = session;
+        user.Session = session;
         SocketUser.SessionId = session;
         SocketUser.IsIdentified = true;
 
         await Context.SaveChangesAsync();
-        await SocketUser.Send(Events.Identified, userSession);
-        
-        Log.Information($"User {userSession.Email} Logged in");
+        await SocketUser.Send(Events.Identified, user);
+
+        Log.Information($"User {user.Email} logged in");
     }
 
     public async Task Login(string session)
     {
-        if(SocketUser.IsIdentified)
+        if (SocketUser.IsIdentified)
             return;
 
         if (await Context.Users.SingleOrDefaultAsync(x => x.Session == session) is
@@ -84,11 +89,11 @@ public partial record AccountService
 
             return;
         }
-        
+
         SocketUser.IsIdentified = true;
 
         await SocketUser.Send(Events.Identified, userSession);
-        
+
         Log.Information($"Ip {SocketUser.UnderSocket.RemoteEndPoint} Logged into account {userSession.Email}");
     }
 
@@ -96,13 +101,13 @@ public partial record AccountService
     {
         if (!SocketUser.IsIdentified)
             return;
-        
+
         SocketUser.SessionId = null;
         SocketUser.IsIdentified = false;
 
         await Context.SaveChangesAsync();
         await SocketUser.Send(Events.LoggedOut);
-        
+
         Log.Information($"Ip {SocketUser.UnderSocket.RemoteEndPoint} Logged out");
     }
 }

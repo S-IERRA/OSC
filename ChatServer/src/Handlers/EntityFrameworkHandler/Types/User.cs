@@ -34,6 +34,8 @@ public class User : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
+
+        builder.HasIndex(e => e.Session);
         
         builder.Property(e => e.Username).IsRequired();
         builder.Property(e => e.Password).IsRequired();
