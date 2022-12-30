@@ -161,3 +161,9 @@ D:\projects\V-ARS\OSC\ChatServer\obj\Debug\net7.0\refint\ChatServer.dll
 D:\projects\V-ARS\OSC\ChatServer\obj\Debug\net7.0\ChatServer.pdb
 D:\projects\V-ARS\OSC\ChatServer\obj\Debug\net7.0\ChatServer.genruntimeconfig.cache
 D:\projects\V-ARS\OSC\ChatServer\obj\Debug\net7.0\ref\ChatServer.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Serilog.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Serilog.Formatting.Compact.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Serilog.Sinks.Console.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Serilog.Sinks.File.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Serilog.Sinks.PeriodicBatching.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Serilog.Sinks.Seq.dll

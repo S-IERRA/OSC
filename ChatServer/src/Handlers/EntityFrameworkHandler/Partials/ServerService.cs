@@ -22,7 +22,7 @@ public partial record AccountService
             return;
         }
 
-        Server server = new Server
+        Server server = new()
         {
             Name = createServerEvent.Name,
             Owner = user,
@@ -30,7 +30,7 @@ public partial record AccountService
             Channels = new List<Channel>(),
         };
 
-        Channel channel = new Channel
+        Channel channel = new()
         {
             Name = "General",
             Server = server, 
@@ -38,7 +38,9 @@ public partial record AccountService
             Messages = new List<Message>()
         };
 
-        server.Members.Add(new Member() {User = user, Server = server});
+        Member member = new() {User = user, Server = server};
+        
+        server.Members.Add(member);
         server.Channels.Add(channel);
 
         Context.Servers.Add(server);
@@ -79,31 +81,38 @@ public partial record AccountService
 
     public async Task JoinServer(string? message, User user)
     {
-        if (!JsonHelper.TryDeserialize<JoinServerEvent>(message, out var joinServerEvent))
+        try
         {
-            await SocketUser.Send(OpCodes.InvalidRequest);
-            return;
+            if (!JsonHelper.TryDeserialize<JoinServerEvent>(message, out var joinServerEvent))
+            {
+                await SocketUser.Send(OpCodes.InvalidRequest);
+                return;
+            }
+            
+            if (await Context.Servers.Where(y => y.InviteCodes.Any(z => z.InviteCode == joinServerEvent.InviteCode)).Include(x=>x.Members).FirstOrDefaultAsync() is not { } server)
+            {
+                await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.ServerDoesNotExist);
+                return;
+            }
+            
+            Log.Debug(server.Members.Count().ToString());
+            Log.Debug(user.Id.ToString());
+
+            if (server.Members.Where(x => x.User.Id == user.Id) is not { })
+            {
+                await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.AlreadyAMember);
+                return;
+            }
+
+            await Context.SaveChangesAsync();
+            await SocketUser.Send(Events.ServerJoined, server);
+
+            Log.Information($"User {user.Username} joined server {server.Name}");
         }
-        
-        if (await Context.Servers.FirstOrDefaultAsync(x => x.InviteCodes.Any(h => h.InviteCode == joinServerEvent.InviteCode)) is not { } server)
+        catch (Exception e)
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.ServerDoesNotExist);
-            return;
+            Log.Fatal(e, "Error while joining server");
         }
-
-        if (server.Members.Any(x => x.User.Id == user.Id))
-        {
-            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.AlreadyAMember);
-            return;
-        }
-
-        Member member = new() { Server = server, User = user };
-        server.Members.Add(member);
-
-        await Context.SaveChangesAsync();
-        await SocketUser.Send(Events.ServerJoined, server);
-        
-        Log.Information($"User {user.Username} joined server {server.Name}");
     }
 
     public async Task LeaveServer(string? message, User user)
@@ -153,4 +162,57 @@ public partial record AccountService
 
         await SocketUser.Send(OpCodes.RequestServers, userSession.Servers);
     }
+    
+    public async Task CreateInvite(string? data, User user)
+    {
+        try
+        {
+            if (!JsonHelper.TryDeserialize<CreateInvite>(data, out var createInvite))
+            {
+                await SocketUser.Send(OpCodes.InvalidRequest);
+                return;
+            }
+
+            if (await Context.Servers.Where(x=>x.Id == createInvite.ServerId).Include(y=>y.InviteCodes).FirstOrDefaultAsync() is not { } server)
+            {
+                await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.ServerDoesNotExist);
+                return;
+            }
+
+            /*
+            if (server.Owner.Id != SocketUser.UserId)
+            {
+                await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.NotOwner);
+                return;
+            }*/
+
+            //check if invite already exists
+            /*if (server.InviteCodes.Any(x => x.InviteCode == createInvite.InviteCode))
+            {
+                await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InviteAlreadyExists);
+                return;
+            }*/
+
+            Invite invite = new()
+            {
+                InviteCode = createInvite.Invite
+            };
+
+            server.InviteCodes.Add(invite);
+            await Context.SaveChangesAsync();
+
+            await SocketUser.Send(Events.ServerInviteCreated, invite);
+            Log.Information($"User {user.Username} created invite {invite.InviteCode} for server {server.Name}");
+        }
+        catch (Exception e)
+        {
+            Log.Fatal(e, "Error creating invite");
+        }
+    }
+}
+
+public class CreateInvite
+{
+    public int ServerId { get; set; }
+    public string Invite { get; set; }
 }

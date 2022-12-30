@@ -1,4 +1,5 @@
-﻿using ChatServer.Objects;
+﻿using System.Text.Json.Serialization;
+using ChatServer.Objects;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -15,6 +16,7 @@ public class Invite : IEntityTypeConfiguration<Invite>
 
     public void Configure(EntityTypeBuilder<Invite> builder)
     {
+        builder.HasIndex(e => e.InviteCode);
         builder.HasKey(e => new {e.ServerId, e.InviteCode});
 
         builder.Property(e => e.InviteCode).HasMaxLength(25);
@@ -65,6 +67,7 @@ public class Member : IEntityTypeConfiguration<Member>
     public Permissions Permissions { get; set; }
     public DateTime    Joined      { get; set; } = DateTime.UtcNow;
     
+    [JsonIgnore]
     public Server Server { get; set; }
     public User   User   { get; set; }
     

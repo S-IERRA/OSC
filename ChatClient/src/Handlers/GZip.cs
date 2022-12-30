@@ -27,28 +27,27 @@ public class GZip
         
         byte[] prepended = length.Concat(dataBytes).ToArray();
         
-        using MemoryStream ms = new MemoryStream();
-        using (GZipStream zip = new GZipStream(ms, CompressionMode.Compress, true))
+        using MemoryStream ms = new();
+        using (GZipStream zip = new(ms, CompressionMode.Compress, true))
         {
             zip.Write(prepended, 0, prepended.Length);
         }
+            
         return ms.ToArray(); 
     }
-    
-    public static byte[] Decompress(byte[] inBytes)
+
+    public static async Task<byte[]> Decompress(byte[] inBytes)
     {
         using MemoryStream inStream = new(inBytes);
-        using GZipStream zip = new(inStream, CompressionMode.Decompress);
+        await using GZipStream zip = new(inStream, CompressionMode.Decompress);
         using MemoryStream outStream = new();
-            
-        byte[] buffer = new byte[4096];
+
+        Memory<byte> buffer = new(new byte[4096]);
         int read;
-            
-        while ((read = zip.Read(buffer, 0, buffer.Length)) > 0)
-        {
-            outStream.WriteAsync(buffer, 0, read);
-        }
-            
+
+        while ((read = await zip.ReadAsync(buffer)) > 0) 
+            await outStream.WriteAsync(buffer[..read]);
+
         return outStream.ToArray();
     }
 }

@@ -4618,7 +4618,8 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\someOne\\.nuget\\packages\\": {}
+    "C:\\Users\\some1\\.nuget\\packages\\": {},
+    "D:\\VS\\SDKS\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
@@ -4626,11 +4627,15 @@
       "projectUniqueName": "D:\\projects\\V-ARS\\OSC\\ChatServer\\ChatServer.csproj",
       "projectName": "ChatServer",
       "projectPath": "D:\\projects\\V-ARS\\OSC\\ChatServer\\ChatServer.csproj",
-      "packagesPath": "C:\\Users\\someOne\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\some1\\.nuget\\packages\\",
       "outputPath": "D:\\projects\\V-ARS\\OSC\\ChatServer\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "D:\\VS\\SDKS\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\someOne\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\some1\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -4638,6 +4643,7 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {

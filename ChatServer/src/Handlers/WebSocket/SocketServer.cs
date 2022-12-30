@@ -47,8 +47,7 @@ public class SocketServer2 : IDisposable
             Socket socket = await Listener.AcceptAsync();
             EndPoint?  ip = socket.RemoteEndPoint;
 
-            SocketUser socketUser = new SocketUser(socket);
-            
+            SocketUser socketUser = new(socket);
             if (ip == null || ConnectedIps.Contains(ip))
             {
                 socket.Close();
@@ -80,9 +79,7 @@ public class SocketServer2 : IDisposable
                 await socketUser.Send(OpCodes.HeartBeat);
                 if (socketUser.UserCancellation.IsCancellationRequested)
                     return;
-                    
-                Console.WriteLine("[HEARTBEAT] Sent Heartbeat");
-
+                
                 DateTimeOffset nextAck = DateTimeOffset.Now + TimeSpan.FromSeconds(10);
 
                 while (GetCurrentTime < nextAck)
@@ -101,7 +98,6 @@ public class SocketServer2 : IDisposable
                     await socketUser.Send(OpCodes.ConnectionClosed);
                     socketUser.Dispose();
 
-                    Console.WriteLine("Connection closed");
                     return;
                 }
                     
@@ -110,27 +106,16 @@ public class SocketServer2 : IDisposable
                 await 5;
             }
         }
-        
-        //RateLimit
-        async Task RateLimit()
-        {
-            await 1;
-            for (;;)
-            {
-                return;
-            }
-        }
 
         //_ = Task.Run(HeartBeat, Cts.Token);
         
         //Receive Data
-
+        MemoryStream dataStream = new();
+        
         while (CanRun())
         {
             if (isTimedOut)
                 return; //Convert this to an actual timeout
-
-            using MemoryStream dataStream = new();
 
             do
             {
@@ -139,7 +124,7 @@ public class SocketServer2 : IDisposable
             }
             while (socketUser.UnderSocket.Available > 0);
 
-            byte[] decompressedBytes = GZip.Decompress(dataStream.ToArray());
+            byte[] decompressedBytes = await GZip.Decompress(dataStream.ToArray());
 
             for (int totalRead = 0; decompressedBytes.Length - totalRead > 0;)
             {
@@ -147,7 +132,7 @@ public class SocketServer2 : IDisposable
                 
                 string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 4, length);
                 totalRead += length + 4;
-
+                
                 if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
                 {
                     await socketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MalformedJson); 
@@ -214,6 +199,18 @@ public class SocketServer2 : IDisposable
 
                     case OpCodes.LeaveServer:
                         await userDbService.LeaveServer(socketMessage.Message, user);
+                        continue;
+                    
+                    case OpCodes.SendMessage:
+                        await userDbService.SendMessage(socketMessage.Message, user);
+                        continue;
+                    
+                    case OpCodes.RequestChannelMessages:
+                        await userDbService.GetChannelMessages(socketMessage.Message);
+                        continue;
+                    
+                    case OpCodes.CreateServerInvite:
+                        await userDbService.CreateInvite(socketMessage.Message, user);
                         continue;
                 }
             }

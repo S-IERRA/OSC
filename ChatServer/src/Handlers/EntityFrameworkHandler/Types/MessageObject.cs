@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
@@ -7,9 +8,9 @@ public class Message : IEntityTypeConfiguration<Message>
 {
     public int Id { get; set; }
     
-    public required User    Author  { get; set; }
+    public required Member  Author  { get; set; }
     public required Server  Server  { get; set; }
-    public required Channel Channel { get; set; }
+    [JsonIgnore] public Channel Channel { get; set; }
     public required string  Content { get; set; }
     
     public DateTime Sent { get; set; } = DateTime.UtcNow;

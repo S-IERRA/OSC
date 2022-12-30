@@ -6,6 +6,12 @@ using K4os.Compression.LZ4.Internal;
 
 namespace ChatServer.Handlers
 {
+    //  4     4       4        ?
+    //[ID][REPLYID][LENGTH](MESSAGE)
+    /*
+     * message -> reply
+     */
+    
     public static class GZip
     {
         private static byte[] GetLength(int length)
@@ -39,21 +45,19 @@ namespace ChatServer.Handlers
             return ms.ToArray(); 
         }
 
-        public static byte[] Decompress(byte[] inBytes)
+        public static async Task<byte[]> Decompress(byte[] inBytes)
         {
             using MemoryStream inStream = new(inBytes);
-            using GZipStream zip = new(inStream, CompressionMode.Decompress);
+            await using GZipStream zip = new(inStream, CompressionMode.Decompress);
             using MemoryStream outStream = new();
-            
-            byte[] buffer = new byte[4096];
+
+            Memory<byte> buffer = new(new byte[4096]);
             int read;
-            
-            while ((read = zip.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                outStream.WriteAsync(buffer, 0, read);
-            }
-            
+
+            while ((read = await zip.ReadAsync(buffer)) > 0) 
+                await outStream.WriteAsync(buffer[..read]);
+
             return outStream.ToArray();
         }
     }
-}
+} 

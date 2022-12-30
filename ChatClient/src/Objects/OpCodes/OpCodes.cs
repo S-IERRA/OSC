@@ -15,10 +15,12 @@
         SendMessage = 6,
         
         CreateServer = 7,
+        CreateServerInvite = 16,
         DeleteServer = 14,
         JoinServer = 8,
         LeaveServer = 13,
         RequestServers = 12,
+        RequestChannelMessages = 15,
         GetServerMembers = 9,
         BanUser = 10,
         KickUser = 11,
@@ -43,12 +45,16 @@
         ServerUpdated = 7,
         ServerJoined = 11,
         ServerLeft = 8,
-        
+        ServerInviteCreated = 12,
+
         JoinedServer = 6,
         UserIsBanned = 10,
 
         MessageReceived = 4,
         MessageUpdated = 8,
         MessageDeleted = 9,
+        
+        MessagesRequested,
+        ChannelsRequested,
     }
 }

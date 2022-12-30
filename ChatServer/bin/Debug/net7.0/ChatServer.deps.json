@@ -12,6 +12,9 @@
           "MySql.Data": "8.0.29",
           "Npgsql": "7.0.0-preview.7",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "6.0.6",
+          "Serilog": "2.12.1-dev-01594",
+          "Serilog.Sinks.Console": "4.1.1-dev-00896",
+          "Serilog.Sinks.Seq": "5.2.3-dev-00260",
           "System.Diagnostics.DiagnosticSource": "7.0.0-preview.3.22175.4",
           "System.Net.Http": "4.3.4"
         },
@@ -318,6 +321,72 @@
       "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {},
       "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {},
       "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {},
+      "Serilog/2.12.1-dev-01594": {
+        "runtime": {
+          "lib/net6.0/Serilog.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.12.1.0"
+          }
+        }
+      },
+      "Serilog.Formatting.Compact/1.1.0": {
+        "dependencies": {
+          "Serilog": "2.12.1-dev-01594"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Serilog.Formatting.Compact.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.Console/4.1.1-dev-00896": {
+        "dependencies": {
+          "Serilog": "2.12.1-dev-01594"
+        },
+        "runtime": {
+          "lib/net5.0/Serilog.Sinks.Console.dll": {
+            "assemblyVersion": "4.1.1.0",
+            "fileVersion": "4.1.1.0"
+          }
+        }
+      },
+      "Serilog.Sinks.File/5.0.0": {
+        "dependencies": {
+          "Serilog": "2.12.1-dev-01594"
+        },
+        "runtime": {
+          "lib/net5.0/Serilog.Sinks.File.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.PeriodicBatching/3.1.0": {
+        "dependencies": {
+          "Serilog": "2.12.1-dev-01594"
+        },
+        "runtime": {
+          "lib/netstandard2.1/Serilog.Sinks.PeriodicBatching.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.1.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.Seq/5.2.3-dev-00260": {
+        "dependencies": {
+          "Serilog": "2.12.1-dev-01594",
+          "Serilog.Formatting.Compact": "1.1.0",
+          "Serilog.Sinks.File": "5.0.0",
+          "Serilog.Sinks.PeriodicBatching": "3.1.0"
+        },
+        "runtime": {
+          "lib/net5.0/Serilog.Sinks.Seq.dll": {
+            "assemblyVersion": "5.2.3.0",
+            "fileVersion": "5.2.3.0"
+          }
+        }
+      },
       "System.Buffers/4.5.1": {},
       "System.Collections/4.3.0": {
         "dependencies": {
@@ -1037,6 +1106,48 @@
       "sha512": "sha512-leXiwfiIkW7Gmn7cgnNcdtNAU70SjmKW3jxGj1iKHOvdn0zRWsgv/l2OJUO5zdGdiv2VRFnAsxxhDgMzofPdWg==",
       "path": "runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
       "hashPath": "runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "Serilog/2.12.1-dev-01594": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-17Ro773Lzj2CfumY0URORIWYEcVzUaLvWxqC6uv5ItnGSq898vYJ1ZRnho3ohVRISNok+ylNSaAISpAU2GZVaQ==",
+      "path": "serilog/2.12.1-dev-01594",
+      "hashPath": "serilog.2.12.1-dev-01594.nupkg.sha512"
+    },
+    "Serilog.Formatting.Compact/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pNroKVjo+rDqlxNG5PXkRLpfSCuDOBY0ri6jp9PLe505ljqwhwZz8ospy2vWhQlFu5GkIesh3FcDs4n7sWZODA==",
+      "path": "serilog.formatting.compact/1.1.0",
+      "hashPath": "serilog.formatting.compact.1.1.0.nupkg.sha512"
+    },
+    "Serilog.Sinks.Console/4.1.1-dev-00896": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-72QU/vM7UYq8YF9/5cyafJhMDgisp13+RY1JS+MLVN/+SsgK6855lRMxsaftsaoAMspeY+DNdes0UOgeJcfpmg==",
+      "path": "serilog.sinks.console/4.1.1-dev-00896",
+      "hashPath": "serilog.sinks.console.4.1.1-dev-00896.nupkg.sha512"
+    },
+    "Serilog.Sinks.File/5.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-uwV5hdhWPwUH1szhO8PJpFiahqXmzPzJT/sOijH/kFgUx+cyoDTMM8MHD0adw9+Iem6itoibbUXHYslzXsLEAg==",
+      "path": "serilog.sinks.file/5.0.0",
+      "hashPath": "serilog.sinks.file.5.0.0.nupkg.sha512"
+    },
+    "Serilog.Sinks.PeriodicBatching/3.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-NDWR7m3PalVlGEq3rzoktrXikjFMLmpwF0HI4sowo8YDdU+gqPlTHlDQiOGxHfB0sTfjPA9JjA7ctKG9zqjGkw==",
+      "path": "serilog.sinks.periodicbatching/3.1.0",
+      "hashPath": "serilog.sinks.periodicbatching.3.1.0.nupkg.sha512"
+    },
+    "Serilog.Sinks.Seq/5.2.3-dev-00260": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-fq1pZvBxzyr1KsPfI2LeCgZENG5MvMAcb/JObjIpk/ql64ceLVjQ+Gyx8lMU8crif/QVrYa+yPRkrTAOQH66jw==",
+      "path": "serilog.sinks.seq/5.2.3-dev-00260",
+      "hashPath": "serilog.sinks.seq.5.2.3-dev-00260.nupkg.sha512"
     },
     "System.Buffers/4.5.1": {
       "type": "package",

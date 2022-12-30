@@ -16,6 +16,7 @@ namespace ChatClient.Handlers
         public string Name { get; set; }
     }
 
+    //Todo: implement replies to send method
     public class WebSocketHandler
     {
         private static readonly Socket Client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -26,27 +27,26 @@ namespace ChatClient.Handlers
         private async void ReceiveMessages()
         {
             byte[] localBuffer = new byte[512];
+            MemoryStream dataStream = new MemoryStream();
 
             for (;;)
-            {           
-                using MemoryStream dataStream = new MemoryStream();
-                
+            {
                 do
                 {
                     int received = await Client.ReceiveAsync(localBuffer, SocketFlags.None);
                     dataStream.Write(localBuffer, 0, received);
                 } 
                 while (Client.Available > 0);
-
-                byte[] decompressedBytes = GZip.Decompress(dataStream.ToArray());
+                
+                byte[] decompressedBytes = await GZip.Decompress(dataStream.ToArray());
 
                 for (int totalRead = 0; decompressedBytes.Length - totalRead > 0;)
                 {
                     int length = GZip.GetLength(decompressedBytes, totalRead);
-
+                
                     string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 4, length);
                     totalRead += length + 4;
-
+                    
                     if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
                     {
                         Console.WriteLine("Invalid message");
@@ -60,6 +60,9 @@ namespace ChatClient.Handlers
         
         private async Task HandleOpcode(WebSocketMessage messageEvent)
         {
+            if(messageEvent.OpCode != OpCodes.HeartBeat)
+                Console.WriteLine(messageEvent.Message);
+
             switch (messageEvent.OpCode)
             {
                 case OpCodes.HeartBeat:
@@ -92,8 +95,7 @@ namespace ChatClient.Handlers
                                 break;
                             }
 
-                            _userSession = userAccount.Session;
-                            Console.WriteLine(_userSession);
+                            Console.WriteLine($"Logged in!");
                             break;
 
                         case Events.LoggedOut:
@@ -105,7 +107,29 @@ namespace ChatClient.Handlers
                             break;
                         
                         case Events.ServerCreated:
-                            Console.WriteLine("Server created");
+                            Console.WriteLine(messageEvent.Message);
+                            break;
+                        
+                        case Events.MessageReceived:
+                            Console.WriteLine(messageEvent.Message);
+                            break;
+                        
+                        case Events.ServerJoined:
+                            Console.WriteLine(messageEvent.Message);
+                            break;
+                        
+                        case Events.MessagesRequested:
+                            bool a = JsonHelper.TryDeserialize<Message[]>(messageEvent.Message, out var messagesArray);
+                            Console.WriteLine(a);
+
+                            foreach (var message in messagesArray)
+                            {
+                                Console.WriteLine($"{message.Content}");
+                            }
+                            
+                            break;
+                        
+                        case Events.ServerInviteCreated:
                             Console.WriteLine(messageEvent.Message);
                             break;
                     }
@@ -118,7 +142,12 @@ namespace ChatClient.Handlers
         public WebSocketHandler()
         {
             Client.DontFragment = true;
-            Client.Connect(IPAddress.Parse("127.0.0.1"), 8787);
+            
+            //Resolve dns
+            //IPAddress addresses = Dns.GetHostAddresses("5.tcp.eu.ngrok.io")[0];
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Loopback, 8787);
+            
+            Client.Connect(endPoint);
             ReceiveMessages();
         }
 
@@ -132,7 +161,6 @@ namespace ChatClient.Handlers
             WebSocketMessage message = new WebSocketMessage(opCode, dataSerialized, eventType, _userSession);
 
             string messageSerialized = JsonSerializer.Serialize(message);
-            Console.WriteLine(messageSerialized);
             byte[] dataCompressed = GZip.Compress(messageSerialized);
 
             await Client.SendAsync(dataCompressed, SocketFlags.None);

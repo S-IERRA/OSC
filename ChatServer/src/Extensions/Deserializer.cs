@@ -6,6 +6,7 @@ using Serilog;
 
 namespace ChatServer.Extensions;
 
+//Implement this some time
 public class SnakeCase : JsonNamingPolicy
 {
     public override string ConvertName(string name)

@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "q6rc/q5x8U5VacKtLnh0vGEBXtpe87yPAlmyZ2/fxcbV+TIHxn0lkEPxysX4ZV0itoGnBPKOA+jZERpwMu+Tlg==",
+  "dgSpecHash": "jC8ZPeChkusx3IJ9nJvPD1oVDaC3L28APEolZImfb+k4UwG7V/Ei1AEwfVIFCPE/CmQ8fnwt+WO/T+eLMmH/Vg==",
   "success": true,
   "projectFilePath": "D:\\projects\\V-ARS\\OSC\\ChatClient\\ChatClient.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\someOne\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512"
+    "C:\\Users\\some1\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512"
   ],
   "logs": []
 }

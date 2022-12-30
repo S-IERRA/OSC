@@ -7,9 +7,9 @@ namespace ChatServer.Handlers
 {
     public record SocketUser(Socket UnderSocket) : IDisposable 
     {
-        private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
+        private static readonly JsonSerializerOptions Options = new()
         {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            DefaultIgnoreCondition = JsonIgnoreCondition.Always
         };
         
         public readonly CancellationTokenSource UserCancellation = new CancellationTokenSource();
@@ -33,7 +33,7 @@ namespace ChatServer.Handlers
             if (!UnderSocket.Connected)
                 Dispose();
             
-            WebSocketMessage message = new WebSocketMessage(opCode, dataSerialized, eventType, default);
+            WebSocketMessage message = new(opCode, dataSerialized, eventType, default);
 
             string messageSerialized = JsonSerializer.Serialize(message);
             byte[] dataCompressed = GZip.Compress(messageSerialized);
@@ -53,14 +53,9 @@ namespace ChatServer.Handlers
         public async Task Send(OpCodes opCode, string message) 
             => await SendData(opCode, null, message);
 
-        private static JsonSerializerOptions _options = new JsonSerializerOptions()
-        {
-            DefaultIgnoreCondition = JsonIgnoreCondition.Always
-        };
-        
         public async Task Send(OpCodes opCode, object message)
         {
-            string jsonMessage = JsonSerializer.Serialize(message, _options);
+            string jsonMessage = JsonSerializer.Serialize(message, Options);
             
             await SendData(opCode, null, jsonMessage);
         }
