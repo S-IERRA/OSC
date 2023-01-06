@@ -1,5 +1,6 @@
 ﻿using ChatServer.Extensions;
 using ChatServer.Objects;
+using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 

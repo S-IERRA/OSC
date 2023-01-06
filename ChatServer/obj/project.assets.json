@@ -1478,6 +1478,16 @@
             "rid": "win"
           }
         }
+      },
+      "ChatShared/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v7.0",
+        "compile": {
+          "bin/placeholder/ChatShared.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/ChatShared.dll": {}
+        }
       }
     }
   },
@@ -4602,10 +4612,16 @@
         "useSharedDesignerContext.txt",
         "version.txt"
       ]
+    },
+    "ChatShared/1.0.0": {
+      "type": "project",
+      "path": "../ChatShared/ChatShared.csproj",
+      "msbuildProject": "../ChatShared/ChatShared.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net7.0": [
+      "ChatShared >= 1.0.0",
       "Microsoft.EntityFrameworkCore >= 7.0.0-preview.4.22229.2",
       "MySql.Data >= 8.0.29",
       "Npgsql >= 7.0.0-preview.7",
@@ -4649,7 +4665,11 @@
       "frameworks": {
         "net7.0": {
           "targetAlias": "net7.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "D:\\projects\\V-ARS\\OSC\\ChatShared\\ChatShared.csproj": {
+              "projectPath": "D:\\projects\\V-ARS\\OSC\\ChatShared\\ChatShared.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

@@ -3,9 +3,11 @@ using System.Net.Sockets;
 using System.Text;
 using ChatServer.Extensions;
 using ChatServer.Objects;
+using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
 
 using Serilog;
+using WebSocketMessage = ChatServer.Objects.WebSocketMessage;
 
 namespace ChatServer.Handlers;
 
@@ -125,12 +127,16 @@ public class SocketServer2 : IDisposable
             while (socketUser.UnderSocket.Available > 0);
 
             byte[] decompressedBytes = await GZip.Decompress(dataStream.ToArray());
+            Console.WriteLine(decompressedBytes.Length);
 
             for (int totalRead = 0; decompressedBytes.Length - totalRead > 0;)
             {
-                int length = GZip.GetLength(decompressedBytes, totalRead);
+                //Ignore this for now, replies will come in a future version
+                int id = GZip.Byte2Int(decompressedBytes, totalRead);
+                int replyId = GZip.Byte2Int(decompressedBytes, totalRead + 4);
+                int length = GZip.Byte2Int(decompressedBytes, totalRead + 8);
                 
-                string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 4, length);
+                string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 12, length);
                 totalRead += length + 4;
                 
                 if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
@@ -230,7 +236,13 @@ public class SocketServer2 : IDisposable
         if (!disposing) 
             return;
         
-        //Dispose objects
+        Listener.Dispose();
+        Cts.Dispose();
+
+        Log.Information("Server stopped");
+        Log.CloseAndFlush();
+        
+        ConnectedIps.Clear();
     }
 
     ~SocketServer2()

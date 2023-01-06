@@ -25,6 +25,12 @@ public class EntityFramework2 : DbContext
     public DbSet<Server> Servers { get; set; }
     public DbSet<Member> Members { get; set; }
     public DbSet<Channel> Channels { get; set; }
+    
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        builder.ApplyConfigurationsFromAssembly(GetType().Assembly);
+    }
 }
 
 public class Factory : IDesignTimeDbContextFactory<EntityFramework2>

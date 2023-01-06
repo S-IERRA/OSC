@@ -1,37 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using ChatShared.Types;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
 
-public class User : IEntityTypeConfiguration<User>
+public class User : UserShared, IEntityTypeConfiguration<UserShared>
 {
-    [NotMapped]
-    private static readonly Timestamp Now = Timestamp.FromDateTime(DateTime.UtcNow);
-    
-    public int Id { get; set; }
-    
-    public required string Username { get; set; }
-    [JsonIgnore] public string Password { get; set; }
-    public required string Email    { get; set; }
-    public string? Session { get; set; }
-    
-    public string? Icon { get; set; }
-    public string? Bio  { get; set; }
-    
-    public Status Status { get; set; }
-    
-    public DateTime LastOnline { get; set; } = DateTime.UtcNow;
-    public DateTime Created    { get; set; } = DateTime.UtcNow;
-    
-    public virtual List<Server> Servers { get; set; }
-
-    public static implicit operator int(User user) 
-        => user.Id;
-
-    public void Configure(EntityTypeBuilder<User> builder)
+    public void Configure(EntityTypeBuilder<UserShared> builder)
     {
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
 
@@ -43,15 +21,4 @@ public class User : IEntityTypeConfiguration<User>
 
         builder.Property(e => e.Status).HasDefaultValue(Status.Offline);
     }
-}
-
-public class IdentifiedEvent
-{
-    public string Session { get; set; }
-}
-
-public enum Status
-{
-    Online,
-    Offline,
 }

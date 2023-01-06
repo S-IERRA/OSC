@@ -1,20 +1,15 @@
 ﻿using System.Text.Json.Serialization;
 using ChatServer.Objects;
-
+using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
 
 //Convert to combined key
-public class Invite : IEntityTypeConfiguration<Invite>
+public class Invite : InviteShared, IEntityTypeConfiguration<InviteShared>
 {
-    public int Id { get; set; }
-
-    public int ServerId { get; set; }
-    public string InviteCode { get; set; }
-
-    public void Configure(EntityTypeBuilder<Invite> builder)
+    public void Configure(EntityTypeBuilder<InviteShared> builder)
     {
         builder.HasIndex(e => e.InviteCode);
         builder.HasKey(e => new {e.ServerId, e.InviteCode});
@@ -23,26 +18,9 @@ public class Invite : IEntityTypeConfiguration<Invite>
     }
 }
 
-public class Server : IEntityTypeConfiguration<Server>
+public class Server : ServerShared, IEntityTypeConfiguration<ServerShared>
 {
-    public int Id { get; set; }
-    private int _ownerId;
-    
-    public required User   Owner { get; set; }
-    public required string Name  { get; set; }
-    
-    public string?   Description  { get; set; }
-    public string?   Icon         { get; set; }
-    public string?   Banner       { get; set; }
-    
-    public DateTime Created { get; set; } = DateTime.UtcNow;
-
-    public virtual ICollection<Member>  Members     { get; set; }
-    public virtual ICollection<Role>    Roles       { get; set; }
-    public virtual ICollection<Channel> Channels    { get; set; }
-    public virtual ICollection<Invite>  InviteCodes { get; set; }
-
-    public void Configure(EntityTypeBuilder<Server> builder)
+    public void Configure(EntityTypeBuilder<ServerShared> builder)
     {
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
         builder.Property(e => e.Name).IsRequired();
@@ -57,23 +35,9 @@ public class Server : IEntityTypeConfiguration<Server>
 }
 
 //Remove id convert to combined key
-public class Member : IEntityTypeConfiguration<Member>
+public class Member : MemberShared, IEntityTypeConfiguration<MemberShared>
 {
-    public int Id { get; set; }
-
-    private int userId;
-    private int serverId;
-    
-    public Permissions Permissions { get; set; }
-    public DateTime    Joined      { get; set; } = DateTime.UtcNow;
-    
-    [JsonIgnore]
-    public Server Server { get; set; }
-    public User   User   { get; set; }
-    
-    public virtual ICollection<Role> Roles { get; set; }
-    
-    public void Configure(EntityTypeBuilder<Member> builder)
+    public void Configure(EntityTypeBuilder<MemberShared> builder)
     {
         builder.HasKey(e => new {e.userId, e.serverId});
         builder.Property(e => e.serverId).IsRequired();
@@ -90,14 +54,4 @@ public class Member : IEntityTypeConfiguration<Member>
             .HasForeignKey(e => e.serverId)
             .IsRequired();
     }
-}
-
-[Flags]
-public enum Permissions
-{
-    Member,
-    Administrator,
-    CanKick,
-    CanBan,
-    CanMute,
 }

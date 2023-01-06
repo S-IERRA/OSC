@@ -7,16 +7,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json;
-using ChatClient.Types;
 using ChatServer.Extensions;
+using ChatShared.Types;
 
 namespace ChatClient.Handlers
 {
-    public class CreateServerEvent
-    { 
-        public string Name { get; set; }
-    }
-
     //Todo: implement replies to send method
     public class WebSocketHandler
     {
@@ -24,6 +19,7 @@ namespace ChatClient.Handlers
         
         //Move this to a user config file
         public static string _userSession = "";
+        public int packetId = 1;
 
         private async void ReceiveMessages()
         {
@@ -43,10 +39,13 @@ namespace ChatClient.Handlers
 
                 for (int totalRead = 0; decompressedBytes.Length - totalRead > 0;)
                 {
-                    int length = GZip.GetLength(decompressedBytes, totalRead);
-                
-                    string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 4, length);
+                    int id = GZip.Byte2Int(decompressedBytes, totalRead);
+                    int replyId = GZip.Byte2Int(decompressedBytes, totalRead + 4);
+                    int length = GZip.Byte2Int(decompressedBytes, totalRead + 8);
+
+                    string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 12, length);
                     totalRead += length + 4;
+                    packetId++;
                     
                     if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
                     {
@@ -90,7 +89,7 @@ namespace ChatClient.Handlers
                     switch (messageEvent.EventType)
                     {
                         case Events.Identified:
-                            if (!JsonHelper.TryDeserialize<User>(messageEvent.Message, out var userAccount))
+                            if (!JsonHelper.TryDeserialize<UserShared>(messageEvent.Message, out var userAccount))
                             {
                                 Console.WriteLine("invalid json");
                                 break;
@@ -120,7 +119,7 @@ namespace ChatClient.Handlers
                             break;
                         
                         case Events.MessagesRequested:
-                            bool a = JsonHelper.TryDeserialize<Message[]>(messageEvent.Message, out var messagesArray);
+                            bool a = JsonHelper.TryDeserialize<MessageShared[]>(messageEvent.Message, out var messagesArray);
                             Console.WriteLine(a);
 
                             foreach (var message in messagesArray)
@@ -154,15 +153,15 @@ namespace ChatClient.Handlers
 
         private int index = 0;
         
-        private async Task SendData(OpCodes opCode, Events? eventType = null, string? dataSerialized = default)
+        private async Task SendData(OpCodes opCode, Events? eventType = null, string? dataSerialized = default, int replyId = 0)
         {
             if (!Client.Connected)
                 return;
             
-            WebSocketMessage message = new WebSocketMessage(opCode, dataSerialized, eventType, _userSession);
+            WebSocketMessage message = new(opCode, dataSerialized, eventType, _userSession);
 
             string messageSerialized = JsonSerializer.Serialize(message);
-            byte[] dataCompressed = GZip.Compress(messageSerialized);
+            byte[] dataCompressed = GZip.Compress(messageSerialized, packetId, replyId);
 
             await Client.SendAsync(dataCompressed, SocketFlags.None);
         }

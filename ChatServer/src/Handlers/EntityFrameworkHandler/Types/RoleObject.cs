@@ -1,25 +1,13 @@
 ﻿using ChatServer.Objects;
+using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
 
-public class Role : IEntityTypeConfiguration<Role>
+public class Role : RoleShared, IEntityTypeConfiguration<RoleShared>
 {
-    public int Id { get; set; }
-    
-    private int userId;
-    private int serverId;
-    
-    public required Server Server { get; set; }
-    public Member   User   { get; set; }
-
-    public required string Name   { get; set; }
-    public required int    Color  { get; set; } //Hex
-    
-    public required Permissions Permissions { get; set; }
-
-    public void Configure(EntityTypeBuilder<Role> builder)
+    public void Configure(EntityTypeBuilder<RoleShared> builder)
     {
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
         

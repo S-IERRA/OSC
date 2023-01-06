@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using ChatServer.Handlers.Cryptography;
 using ChatServer.Objects;
+using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 

@@ -1,21 +1,13 @@
 ﻿using System.Text.Json.Serialization;
+using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
 
-public class Message : IEntityTypeConfiguration<Message>
+public class Message : MessageShared, IEntityTypeConfiguration<MessageShared>
 {
-    public int Id { get; set; }
-    
-    public required Member  Author  { get; set; }
-    public required Server  Server  { get; set; }
-    [JsonIgnore] public Channel Channel { get; set; }
-    public required string  Content { get; set; }
-    
-    public DateTime Sent { get; set; } = DateTime.UtcNow;
-    
-    public void Configure(EntityTypeBuilder<Message> builder)
+    public void Configure(EntityTypeBuilder<MessageShared> builder)
     {
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
         

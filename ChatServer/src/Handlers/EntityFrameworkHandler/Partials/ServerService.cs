@@ -1,5 +1,6 @@
 ﻿using ChatServer.Extensions;
 using ChatServer.Objects;
+using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -26,8 +27,8 @@ public partial record AccountService
         {
             Name = createServerEvent.Name,
             Owner = user,
-            Members = new List<Member>(),
-            Channels = new List<Channel>(),
+            Members = new List<MemberShared>(),
+            Channels = new List<ChannelShared>(),
         };
 
         Channel channel = new()
@@ -35,7 +36,7 @@ public partial record AccountService
             Name = "General",
             Server = server, 
             ViewPermission = Permissions.Member,
-            Messages = new List<Message>()
+            Messages = new List<MessageShared>()
         };
 
         Member member = new() {User = user, Server = server};

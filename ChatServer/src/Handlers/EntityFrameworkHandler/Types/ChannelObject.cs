@@ -1,21 +1,13 @@
 ﻿using ChatServer.Objects;
+using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
 
-public class Channel : IEntityTypeConfiguration<Channel>
+public class Channel : ChannelShared, IEntityTypeConfiguration<ChannelShared>
 {
-    public int Id { get; set; }
-
-    public required string Name { get; set; }
-    public required Permissions ViewPermission { get; set; }
-    
-    public required Server Server { get; set; }
-    
-    public virtual List<Message> Messages { get; set; }
-
-    public void Configure(EntityTypeBuilder<Channel> builder)
+    public void Configure(EntityTypeBuilder<ChannelShared> builder)
     {
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
         

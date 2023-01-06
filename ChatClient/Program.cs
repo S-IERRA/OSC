@@ -2,9 +2,9 @@
 
 using ChatClient.Handlers;
 using System.Text.Json;
-using ChatClient;
-using ChatClient.Json;
-using ChatClient.Types;
+
+using ChatShared.Json;
+using ChatShared.Types;
 
 //Todo: Cachce system for msgs
 
@@ -45,48 +45,31 @@ for (;;)
 
             //join server
             case 8:
-                sonData = JsonSerializer.Serialize(new JoinServerEvent()
-                {
-                    InviteCode = command[0]
-                });
+                sonData = JsonSerializer.Serialize(new JoinServerEvent(command[0]));
 
                 await webSocket.Send(OpCodes.JoinServer, sonData);
                 break;
 
             case 6:
-                sonData = JsonSerializer.Serialize(new SendMessageEvent()
-                {
-                    Content = command[0],
-                    ChannelId = 1
-                });
-                
+                sonData = JsonSerializer.Serialize(new SendMessageEvent(command[0], Int32.Parse(command[1])));
+
                 await webSocket.Send(OpCodes.SendMessage, sonData);
                 break;
 
             case 15:
-                sonData = JsonSerializer.Serialize(new RequestChannelMessages()
-                {
-                    channel = Int32.Parse(command[0])
-                });
+                sonData = JsonSerializer.Serialize(new RequestChannelMessages(Int32.Parse(command[0])));
 
                 await webSocket.Send(OpCodes.RequestChannelMessages, sonData);
                 break;
 
             case 7:
-                sonData = JsonSerializer.Serialize(new CreateServerEvent()
-                {
-                    Name = "testServer"
-                });
+                sonData = JsonSerializer.Serialize(new CreateServerEvent(command[0]));
 
                 await webSocket.Send(OpCodes.CreateServer, sonData);
                 break;
 
             case 16:
-                sonData = JsonSerializer.Serialize(new CreateInvite()
-                {
-                    ServerId = Int32.Parse(command[0]),
-                    Invite = command[1]
-                });
+                sonData = JsonSerializer.Serialize(new CreateInvite(Int32.Parse(command[0]), command[1]));
 
                 await webSocket.Send(OpCodes.CreateServerInvite, sonData);
                 break;
