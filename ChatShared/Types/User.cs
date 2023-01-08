@@ -5,7 +5,7 @@ namespace ChatShared.Types;
 
 public class UserShared
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     
     public required string Username { get; set; }
     [JsonIgnore] public string Password { get; set; }
@@ -19,11 +19,8 @@ public class UserShared
     
     public DateTime LastOnline { get; set; } = DateTime.UtcNow;
     public DateTime Created    { get; set; } = DateTime.UtcNow;
-    
-    public virtual List<ServerShared> Servers { get; set; }
 
-    public static implicit operator int(UserShared user) 
-        => user.Id;
+    public virtual ICollection<ServerShared> Servers { get; set; } = new HashSet<ServerShared>();
 }
 public enum Status
 {

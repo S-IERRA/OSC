@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "MfIwd+a7QIeuOieLFS4fxrqPWGpcKUKS1TYC8/VGsXZJUc4OVwinqg/VMRqHykUQL8babY5lrFBRoSPypM1IWA==",
+  "dgSpecHash": "bhb8uHS2YVjCJcpoYKCxfAP72s/knLUuHWdLPLsbMV9uIJ7QSWMnYL1bTN2vk1cDVjsyEeoFeuju2CBfVAARqg==",
   "success": true,
   "projectFilePath": "D:\\projects\\V-ARS\\OSC\\ChatServer\\ChatServer.csproj",
   "expectedPackageFiles": [
@@ -9,6 +9,8 @@
     "C:\\Users\\some1\\.nuget\\packages\\k4os.compression.lz4\\1.2.6\\k4os.compression.lz4.1.2.6.nupkg.sha512",
     "C:\\Users\\some1\\.nuget\\packages\\k4os.compression.lz4.streams\\1.2.6\\k4os.compression.lz4.streams.1.2.6.nupkg.sha512",
     "C:\\Users\\some1\\.nuget\\packages\\k4os.hash.xxhash\\1.0.6\\k4os.hash.xxhash.1.0.6.nupkg.sha512",
+    "C:\\Users\\some1\\.nuget\\packages\\mediatr\\11.1.0\\mediatr.11.1.0.nupkg.sha512",
+    "C:\\Users\\some1\\.nuget\\packages\\mediatr.contracts\\1.0.1\\mediatr.contracts.1.0.1.nupkg.sha512",
     "C:\\Users\\some1\\.nuget\\packages\\microsoft.entityframeworkcore\\7.0.0-preview.4.22229.2\\microsoft.entityframeworkcore.7.0.0-preview.4.22229.2.nupkg.sha512",
     "C:\\Users\\some1\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\7.0.0-preview.4.22229.2\\microsoft.entityframeworkcore.abstractions.7.0.0-preview.4.22229.2.nupkg.sha512",
     "C:\\Users\\some1\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\7.0.0-preview.4.22229.2\\microsoft.entityframeworkcore.analyzers.7.0.0-preview.4.22229.2.nupkg.sha512",

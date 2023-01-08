@@ -29,7 +29,12 @@ public class Server : ServerShared, IEntityTypeConfiguration<ServerShared>
         
         builder.HasOne(e => e.Owner)
             .WithMany()
-            .HasForeignKey(e => e._ownerId)
+            .HasForeignKey(e => e.OwnerId)
+            .IsRequired();
+
+        builder.HasMany(e => e.Channels)
+            .WithOne()
+            .HasForeignKey(e => e.ServerId)
             .IsRequired();
     }
 }

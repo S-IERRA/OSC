@@ -6,39 +6,39 @@ namespace ChatShared.Types;
 //Convert to combined key
 public class InviteShared
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
-    public int ServerId { get; set; }
+    public Guid ServerId { get; set; }
     public string InviteCode { get; set; }
 }
 
 public class ServerShared
 {
-    [NotMapped] public int Id { get; set; }
-    [NotMapped] public int _ownerId;
+     public Guid Id { get; set; }
+     public required Guid OwnerId { get; set; }
     
-    public required UserShared   Owner { get; set; }
+    public UserShared   Owner { get; set; }
     public required string Name  { get; set; }
     
     public string?   Description  { get; set; }
     public string?   Icon         { get; set; }
     public string?   Banner       { get; set; }
     
-    public DateTime Created { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset Created { get; set; } = DateTime.UtcNow;
 
-    public virtual ICollection<MemberShared>  Members     { get; set; }
-    public virtual ICollection<RoleShared>    Roles       { get; set; }
-    public virtual ICollection<ChannelShared> Channels    { get; set; }
-    public virtual ICollection<InviteShared>  InviteCodes { get; set; }
+    public virtual ICollection<MemberShared>  Members     { get; set; } = new HashSet<MemberShared>();
+    public virtual ICollection<RoleShared>    Roles       { get; set; } = new HashSet<RoleShared>();
+    public virtual ICollection<ChannelShared> Channels    { get; set; } = new HashSet<ChannelShared>();
+    public virtual ICollection<InviteShared>  InviteCodes { get; set; } = new HashSet<InviteShared>();
 }
 
 //Remove id convert to combined key
 public class MemberShared
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
-    [NotMapped] public int userId;
-    [NotMapped] public int serverId;
+    public Guid userId;
+    public Guid serverId;
     
     public Permissions Permissions { get; set; }
     public DateTime    Joined      { get; set; } = DateTime.UtcNow;
@@ -47,7 +47,7 @@ public class MemberShared
     public ServerShared Server { get; set; }
     public UserShared   User   { get; set; }
     
-    public virtual ICollection<RoleShared> Roles { get; set; }
+    public virtual ICollection<RoleShared> Roles { get; set; } = new HashSet<RoleShared>();
 }
 
 [Flags]

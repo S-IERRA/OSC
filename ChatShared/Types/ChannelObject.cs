@@ -2,12 +2,13 @@
 
 public class ChannelShared
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     public required string Name { get; set; }
     public required Permissions ViewPermission { get; set; }
     
-    public required ServerShared Server { get; set; }
-    
-    public virtual List<MessageShared> Messages { get; set; }
+    public required Guid ServerId { get; set; } // You need this
+    public ServerShared Server { get; set; }
+
+    public virtual ICollection<MessageShared> Messages { get; set; } = new HashSet<MessageShared>();
 }

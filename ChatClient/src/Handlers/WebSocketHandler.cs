@@ -1,33 +1,32 @@
-﻿using System;
-using System.IO.Compression;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Net.WebSockets;
+
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Text.Json;
-using ChatServer.Extensions;
+using System.Threading.Channels;
+using ChatShared;
 using ChatShared.Types;
 
 namespace ChatClient.Handlers
 {
-    //Todo: implement replies to send method
     public class WebSocketHandler
     {
         private static readonly Socket Client = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         
+        private readonly Dictionary<uint, TaskCompletionSource<WebSocketMessage>> _replyTasks = new();
+
         //Move this to a user config file
-        public static string _userSession = "";
-        public int packetId = 1;
+        private static string _userSession = "";
+        private static uint PacketIndex = 1;
 
         private async void ReceiveMessages()
         {
             byte[] localBuffer = new byte[512];
-            MemoryStream dataStream = new MemoryStream();
 
             for (;;)
             {
+                MemoryStream dataStream = new();
+
                 do
                 {
                     int received = await Client.ReceiveAsync(localBuffer, SocketFlags.None);
@@ -36,105 +35,31 @@ namespace ChatClient.Handlers
                 while (Client.Available > 0);
                 
                 byte[] decompressedBytes = await GZip.Decompress(dataStream.ToArray());
+                await dataStream.DisposeAsync();
 
                 for (int totalRead = 0; decompressedBytes.Length - totalRead > 0;)
                 {
-                    int id = GZip.Byte2Int(decompressedBytes, totalRead);
-                    int replyId = GZip.Byte2Int(decompressedBytes, totalRead + 4);
+                    uint replyId = GZip.Byte2UInt(decompressedBytes, totalRead + 4);
                     int length = GZip.Byte2Int(decompressedBytes, totalRead + 8);
 
                     string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 12, length);
                     totalRead += length + 4;
-                    packetId++;
-                    
+                    PacketIndex++;
+
                     if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
                     {
                         Console.WriteLine("Invalid message");
                         continue;
                     }
-
-                    HandleOpcode(socketMessage);
-                }
-            }
-        }
-        
-        private async Task HandleOpcode(WebSocketMessage messageEvent)
-        {
-            if(messageEvent.OpCode != OpCodes.HeartBeat)
-                Console.WriteLine(messageEvent.Message);
-
-            switch (messageEvent.OpCode)
-            {
-                case OpCodes.HeartBeat:
-                {
-                    await Send(OpCodes.HeartBeatAck);
-                    Console.WriteLine("[HEARTBEAT] Sent ACK");
-                    break;
-                }
-
-                case OpCodes.InvalidRequest:
-                {
-                    Console.WriteLine($"[ERROR] {messageEvent.OpCode} {messageEvent.Message}");
-                    break;
-                }
-
-                case OpCodes.ConnectionClosed:
-                {
-                    Console.WriteLine("[ERROR] Connection closed");
-                    break;
-                }
-
-                case OpCodes.Event:
-                {
-                    switch (messageEvent.EventType)
+                    
+                    if (_replyTasks.TryGetValue(replyId, out var replyTask))
                     {
-                        case Events.Identified:
-                            if (!JsonHelper.TryDeserialize<UserShared>(messageEvent.Message, out var userAccount))
-                            {
-                                Console.WriteLine("invalid json");
-                                break;
-                            }
-
-                            Console.WriteLine($"Logged in!");
-                            break;
-
-                        case Events.LoggedOut:
-                            Console.WriteLine("Logged out");
-                            break;
-
-                        case Events.Registered:
-                            Console.WriteLine("Registered");
-                            break;
-                        
-                        case Events.ServerCreated:
-                            Console.WriteLine(messageEvent.Message);
-                            break;
-                        
-                        case Events.MessageReceived:
-                            Console.WriteLine(messageEvent.Message);
-                            break;
-                        
-                        case Events.ServerJoined:
-                            Console.WriteLine(messageEvent.Message);
-                            break;
-                        
-                        case Events.MessagesRequested:
-                            bool a = JsonHelper.TryDeserialize<MessageShared[]>(messageEvent.Message, out var messagesArray);
-                            Console.WriteLine(a);
-
-                            foreach (var message in messagesArray)
-                            {
-                                Console.WriteLine($"{message.Content}");
-                            }
-                            
-                            break;
-                        
-                        case Events.ServerInviteCreated:
-                            Console.WriteLine(messageEvent.Message);
-                            break;
+                        _replyTasks.Remove(replyId);
+                        replyTask.SetResult(socketMessage);
                     }
 
-                    break;
+                    if (socketMessage.OpCode == OpCodes.HeartBeat) 
+                        await Send(OpCodes.HeartBeatAck);
                 }
             }
         }
@@ -150,10 +75,9 @@ namespace ChatClient.Handlers
             Client.Connect(endPoint);
             ReceiveMessages();
         }
-
-        private int index = 0;
         
-        private async Task SendData(OpCodes opCode, Events? eventType = null, string? dataSerialized = default, int replyId = 0)
+        //todo: clean these up
+        private async Task SendData(OpCodes opCode, Events? eventType = null, string? dataSerialized = default)
         {
             if (!Client.Connected)
                 return;
@@ -161,9 +85,27 @@ namespace ChatClient.Handlers
             WebSocketMessage message = new(opCode, dataSerialized, eventType, _userSession);
 
             string messageSerialized = JsonSerializer.Serialize(message);
-            byte[] dataCompressed = GZip.Compress(messageSerialized, packetId, replyId);
+            byte[] dataCompressed = GZip.Compress(messageSerialized, PacketIndex);
 
             await Client.SendAsync(dataCompressed, SocketFlags.None);
+        }
+        
+        private async Task<WebSocketMessage?> SendWithReply(OpCodes opCode, Events? eventType = null, string? dataSerialized = default)
+        {
+            if (!Client.Connected)
+                return null;
+            
+            WebSocketMessage message = new(opCode, dataSerialized, eventType, _userSession);
+            string socketMessageSerialized = JsonSerializer.Serialize(message);
+            
+            byte[] dataCompressed = GZip.Compress(socketMessageSerialized, PacketIndex);
+
+            var replyTask = new TaskCompletionSource<WebSocketMessage>();
+            _replyTasks[PacketIndex] = replyTask;
+            
+            await Client.SendAsync(dataCompressed, SocketFlags.None);
+
+            return await replyTask.Task;
         }
 
         public async Task Send(OpCodes opCode) 
@@ -178,6 +120,32 @@ namespace ChatClient.Handlers
         public async Task Send(OpCodes opCode, string? message) 
             => await SendData(opCode, null, message);
 
+        public async Task<WebSocketMessage?> SendReply(OpCodes opCode) 
+            => await SendWithReply(opCode);
+        
+        public async Task<WebSocketMessage?> SendReply(Events eventType)
+            => await SendWithReply(OpCodes.Event, eventType);
+        
+        public async Task<WebSocketMessage?> SendReply(OpCodes opCode, Events eventType) 
+            => await SendWithReply(opCode, eventType);
+        
+        public async Task<WebSocketMessage?> SendReply(OpCodes opCode, string? message) 
+            => await SendWithReply(opCode, null, message);
+
+        public async Task<WebSocketMessage?> SendReply(OpCodes opCode, object message)
+        {
+            string jsonMessage = JsonSerializer.Serialize(message);
+            
+            return await SendWithReply(opCode, null, jsonMessage);
+        }
+        
+        public async Task<WebSocketMessage?> SendReply(Events eventType, object message)
+        { 
+            string jsonMessage = JsonSerializer.Serialize(message);
+            
+            return await SendWithReply(OpCodes.Event, eventType, jsonMessage);
+        }
+        
         public async Task Send(OpCodes opCode, object message)
         {
             string jsonMessage = JsonSerializer.Serialize(message);

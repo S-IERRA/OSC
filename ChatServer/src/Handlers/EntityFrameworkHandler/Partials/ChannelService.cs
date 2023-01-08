@@ -1,26 +1,16 @@
 ﻿using ChatServer.Extensions;
 using ChatServer.Objects;
+using ChatShared;
+using ChatShared.Json;
 using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace ChatServer.Handlers;
 
-public class SendMessageEvent
-{
-    public string Content { get; set; }
-    public int ChannelId { get; set; }
-    public int ServerId{ get; set; }
-}
-
-public class RequestChannelMessages
-{
-    public int channel { get; set; }
-}
-
 public partial record AccountService
 {
-    //Permissions vuln
+    //Todo: Permissions vuln
     public async Task GetChannelMessages(string? message)
     {
         if (!JsonHelper.TryDeserialize<RequestChannelMessages>(message, out var messageEvent))
@@ -37,7 +27,7 @@ public partial record AccountService
             return;
         }*/
 
-        if (await Context.Channels.Where(x => x.Id == messageEvent.channel).Include(x => x.Messages)
+        if (await Context.Channels.Where(x => x.Id == messageEvent.ChannelId).Include(x => x.Messages)
                 .FirstOrDefaultAsync() is
             not { } channelSession)
         {
@@ -50,7 +40,7 @@ public partial record AccountService
     }
 
     //Permissions vuln
-    public async Task GetServerChannels(uint serverId)
+    public async Task GetServerChannels(Guid serverId)
     {
         if (await Context.Servers.Where(x => x.Id == serverId).Include(x => x.Channels).FirstOrDefaultAsync() is
             not { } server)
@@ -63,6 +53,7 @@ public partial record AccountService
         await SocketUser.Send(Events.ChannelsRequested, server.Channels);
     }
 
+    //Todo: lazily load messages
     public async Task GetChannelMessagesLazy(Channel channel, Range range)
     {
         /* why the fuck is this purple

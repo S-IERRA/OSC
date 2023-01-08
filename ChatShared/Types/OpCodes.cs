@@ -1,8 +1,6 @@
 ﻿namespace ChatShared.Types
 {
-    //Move some of these to error-codes and response codes
-    //Move these to differnet files
-    //Add error messages into enums, i.e ErrorMessage.InvalidServerId (Server does not exist.)
+    //Todo: organise these
     public enum OpCodes
     {
         //Server
@@ -27,7 +25,7 @@
         GetServerMembers = 9,
         BanUser = 10,
         KickUser = 11,
-
+        
         //Errors
         InvalidRequest = 400,
         Unauthorized = 401,

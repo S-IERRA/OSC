@@ -167,3 +167,7 @@ D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Serilog.Sinks.Console.dll
 D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Serilog.Sinks.File.dll
 D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Serilog.Sinks.PeriodicBatching.dll
 D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Serilog.Sinks.Seq.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\MediatR.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\MediatR.Contracts.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\ChatShared.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\ChatShared.pdb

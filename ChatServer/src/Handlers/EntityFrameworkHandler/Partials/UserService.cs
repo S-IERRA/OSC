@@ -1,10 +1,10 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
-using ChatServer.Handlers.Cryptography;
-using ChatServer.Objects;
+﻿using System.Text.RegularExpressions;
+
+using ChatShared.Json;
 using ChatShared.Types;
+
 using Microsoft.EntityFrameworkCore;
+
 using Serilog;
 
 namespace ChatServer.Handlers;
@@ -56,26 +56,35 @@ public partial record AccountService
 
     public async Task Login(LoginRegisterEvent loginEvent)
     {
-        User? user = await Context.Users
-            .Where(u => u.Email == loginEvent.Email)
-            .FirstOrDefaultAsync();
-
-        if (user is null || !Pbkdf2.ValidatePassword(loginEvent.Password, user.Password))
+        try
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidUserOrPass);
-            return;
+            User? user = await Context.Users
+                .Where(u => u.Email == loginEvent.Email)
+                .FirstOrDefaultAsync();
+
+            Log.Debug("Called Login");
+
+            if (user is null || !Pbkdf2.ValidatePassword(loginEvent.Password, user.Password))
+            {
+                await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidUserOrPass);
+                return;
+            }
+
+            string session = Guid.NewGuid().ToString();
+
+            user.Session = session;
+            SocketUser.SessionId = session;
+            SocketUser.IsIdentified = true;
+
+            await Context.SaveChangesAsync();
+            await SocketUser.Send(Events.Identified, "TEST");
+
+            //Log.Information($"User {user.Email} logged in");
         }
-
-        string session = Guid.NewGuid().ToString();
-
-        user.Session = session;
-        SocketUser.SessionId = session;
-        SocketUser.IsIdentified = true;
-
-        await Context.SaveChangesAsync();
-        await SocketUser.Send(Events.Identified, user);
-
-        Log.Information($"User {user.Email} logged in");
+        catch(Exception e)
+        {
+            Log.Fatal(e, "Error while logging in");
+        }
     }
 
     public async Task Login(string session)

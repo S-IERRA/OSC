@@ -4,10 +4,10 @@ namespace ChatShared.Types;
 
 public class RoleShared
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     
-    [NotMapped] public int userId;
-    [NotMapped] public int serverId;
+    [NotMapped] public Guid userId;
+    [NotMapped] public Guid serverId;
     
     public required ServerShared Server { get; set; }
     public MemberShared   User   { get; set; }

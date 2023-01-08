@@ -1,22 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.RegularExpressions;
-using ChatServer.Objects;
-using Google.Protobuf.WellKnownTypes;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 #pragma warning disable CS0649
 #pragma warning disable CS8618
 
 namespace ChatServer.Handlers;
 
-//Todo: Move this to a different file
-public class CreateServerEvent
-{ 
-    public string Name { get; set; }
-}
-
+//Todo: MAJOR runtime error with database model creation
 public class EntityFramework2 : DbContext
 {
     public EntityFramework2(DbContextOptions options) : base(options) { }

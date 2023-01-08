@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace ChatServer.Handlers.Cryptography;
+namespace ChatServer.Handlers;
 
 public static class Pbkdf2
 {

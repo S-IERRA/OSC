@@ -1,6 +1,6 @@
 ﻿namespace ChatServer.Objects;
 
-public class LoginRegisterEvent
+public class LoginRegisterEvefnt
 {
     public required string Password { get; init; }
 

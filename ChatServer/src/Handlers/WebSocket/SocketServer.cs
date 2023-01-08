@@ -3,16 +3,17 @@ using System.Net.Sockets;
 using System.Text;
 using ChatServer.Extensions;
 using ChatServer.Objects;
+
+using ChatShared;
+using ChatShared.Json;
 using ChatShared.Types;
+
 using Microsoft.EntityFrameworkCore;
 
 using Serilog;
-using WebSocketMessage = ChatServer.Objects.WebSocketMessage;
 
 namespace ChatServer.Handlers;
 
-//Todo: in V2 remove some of the null checks replace with Empty statements
-//Todo: clean this up in v2, get pre-alpha working
 public class SocketServer2 : IDisposable
 {
     private static readonly Factory Factory = new Factory();
@@ -64,6 +65,7 @@ public class SocketServer2 : IDisposable
         }
     }
 
+    //Todo: optimisation and clean-up phase
     private async Task VirtualUserHandler(SocketUser socketUser)
     {
         EntityFramework2 context = Factory.CreateDbContext();
@@ -73,6 +75,8 @@ public class SocketServer2 : IDisposable
 
         bool isTimedOut = false,
             receivedAck = false;
+        
+        uint packetId = 1;
 
         async Task HeartBeat()
         {
@@ -112,12 +116,12 @@ public class SocketServer2 : IDisposable
         //_ = Task.Run(HeartBeat, Cts.Token);
         
         //Receive Data
-        MemoryStream dataStream = new();
         
         while (CanRun())
         {
             if (isTimedOut)
                 return; //Convert this to an actual timeout
+            MemoryStream dataStream = new();
 
             do
             {
@@ -127,17 +131,17 @@ public class SocketServer2 : IDisposable
             while (socketUser.UnderSocket.Available > 0);
 
             byte[] decompressedBytes = await GZip.Decompress(dataStream.ToArray());
-            Console.WriteLine(decompressedBytes.Length);
+            await dataStream.DisposeAsync();
 
-            for (int totalRead = 0; decompressedBytes.Length - totalRead > 0;)
+            for (int totalRead = 0; decompressedBytes.Length - totalRead > 0; packetId++)
             {
-                //Ignore this for now, replies will come in a future version
-                int id = GZip.Byte2Int(decompressedBytes, totalRead);
-                int replyId = GZip.Byte2Int(decompressedBytes, totalRead + 4);
+                //move this to the deserializer
+                socketUser.ReplyId = GZip.Byte2UInt(decompressedBytes, totalRead);
                 int length = GZip.Byte2Int(decompressedBytes, totalRead + 8);
                 
+                totalRead += length + 12;
+
                 string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 12, length);
-                totalRead += length + 4;
                 
                 if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
                 {
@@ -147,8 +151,7 @@ public class SocketServer2 : IDisposable
                     continue;
                 }
                 
-                //This opcode handling is a bit fucking wack
-                //Rewrite this fucking mess
+                //This opcode handling is a mess
                 if (socketMessage.OpCode == OpCodes.HeartBeatAck)
                 {
                     receivedAck = true;
@@ -164,7 +167,7 @@ public class SocketServer2 : IDisposable
                         Log.Warning($"Malformed Login Register Json: {socketMessage.Message}");
                         continue;
                     }
-
+                    
                     switch (socketMessage.OpCode)
                     {
                         case OpCodes.Identify:
@@ -177,7 +180,7 @@ public class SocketServer2 : IDisposable
                     }
                 }
 
-                //Potentially huge vulnerability due to ip spoofing
+                //Todo: Potentially huge vulnerability due to ip spoofing
                 string? sessionToken = socketUser.SessionId ?? socketMessage.Session;
                 
                 //Get user by session
@@ -187,10 +190,8 @@ public class SocketServer2 : IDisposable
                     await socketUser.Send(OpCodes.InvalidRequest, "Invalid session");
                     continue;
                 }
-
-                //Todo: Check permissions
-                //Todo: clean this up
-                //Todo: possibly move message and user to AccountService?
+                
+                //Todo: Implement MediatR
                 switch (socketMessage.OpCode)
                 {
                     case OpCodes.CreateServer:
@@ -209,6 +210,7 @@ public class SocketServer2 : IDisposable
                         await userDbService.LeaveServer(socketMessage.Message, user);
                         continue;
                     
+                    //Todo: This needs to send out messages to subscribed users 
                     case OpCodes.SendMessage:
                         await userDbService.SendMessage(socketMessage.Message, user);
                         continue;

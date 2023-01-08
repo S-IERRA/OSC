@@ -1,5 +1,5 @@
 ﻿namespace ChatShared.Json;
 
-public record SendMessageEvent(string Content, int ChannelId);
+public record SendMessageEvent(string Content, Guid ChannelId, Guid ServerId);
 
-public record RequestChannelMessages(int ChannelId);
+public record RequestChannelMessages(Guid ChannelId);

@@ -29,7 +29,8 @@ for (;;)
                     Email = command[1]
                 });
 
-                await webSocket.Send(OpCodes.Identify, sonData);
+                var reply = await webSocket.SendReply(OpCodes.Identify, sonData);
+                Console.WriteLine("passed");
                 break;
 
             case 5:
@@ -50,8 +51,9 @@ for (;;)
                 await webSocket.Send(OpCodes.JoinServer, sonData);
                 break;
 
+            /*
             case 6:
-                sonData = JsonSerializer.Serialize(new SendMessageEvent(command[0], Int32.Parse(command[1])));
+                sonData = JsonSerializer.Serialize(new SendMessageEvent(command[0], Int32.Parse(command[1]), Int32.Parse(command[2])));
 
                 await webSocket.Send(OpCodes.SendMessage, sonData);
                 break;
@@ -72,7 +74,7 @@ for (;;)
                 sonData = JsonSerializer.Serialize(new CreateInvite(Int32.Parse(command[0]), command[1]));
 
                 await webSocket.Send(OpCodes.CreateServerInvite, sonData);
-                break;
+                break;*/
         }
     }
     catch (Exception e)

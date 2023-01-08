@@ -2,11 +2,8 @@
 using System.Text;
 using System.Text.Json;
 
-using Serilog;
+namespace ChatShared;
 
-namespace ChatServer.Extensions;
-
-//Implement this some time
 public class SnakeCase : JsonNamingPolicy
 {
     public override string ConvertName(string name)
@@ -53,7 +50,6 @@ public static class JsonHelper
         }
         catch(Exception e)
         {
-            Log.Error(e.Message);
             return false;
         }
     }

@@ -1,5 +1,6 @@
-﻿using ChatServer.Extensions;
-using ChatServer.Objects;
+﻿using System.Text.RegularExpressions;
+using ChatShared;
+using ChatShared.Json;
 using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -22,29 +23,22 @@ public partial record AccountService
 
             return;
         }
-
-        Server server = new()
-        {
-            Name = createServerEvent.Name,
-            Owner = user,
-            Members = new List<MemberShared>(),
-            Channels = new List<ChannelShared>(),
-        };
-
-        Channel channel = new()
-        {
-            Name = "General",
-            Server = server, 
-            ViewPermission = Permissions.Member,
-            Messages = new List<MessageShared>()
-        };
-
-        Member member = new() {User = user, Server = server};
         
-        server.Members.Add(member);
-        server.Channels.Add(channel);
+        Guid serverId = Guid.NewGuid();
 
+        Server server  = new Server
+        {
+            Id = serverId,
+            Name = createServerEvent.Name,
+            OwnerId = user.Id
+        };
+        
         Context.Servers.Add(server);
+        Context.Channels.Add(new Channel {
+            ServerId = serverId,
+            Name = "General",
+            ViewPermission = Permissions.Member,
+        });
 
         await Context.SaveChangesAsync();
         await SocketUser.Send(Events.ServerCreated, server);
@@ -196,7 +190,7 @@ public partial record AccountService
 
             Invite invite = new()
             {
-                InviteCode = createInvite.Invite
+                InviteCode = createInvite.InviteCode
             };
 
             server.InviteCodes.Add(invite);
@@ -210,10 +204,4 @@ public partial record AccountService
             Log.Fatal(e, "Error creating invite");
         }
     }
-}
-
-public class CreateInvite
-{
-    public int ServerId { get; set; }
-    public string Invite { get; set; }
 }

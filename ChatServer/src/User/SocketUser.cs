@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 using System.Net.Sockets;
 using System.Text.Json.Serialization;
+using ChatShared;
 using ChatShared.Types;
-using WebSocketMessage = ChatServer.Objects.WebSocketMessage;
 
 namespace ChatServer.Handlers
 {
@@ -18,10 +18,10 @@ namespace ChatServer.Handlers
         //public IPAddress UserIp { get; set; 
         public bool IsIdentified = false;
         public string? SessionId;
-        private int PacketId = 0;
         
-        public delegate void WorkCompletedCallBack(string result);
-
+        private uint _packetId = 1;
+        public uint ReplyId = 1;
+        
         public void Dispose()
         {
             UserCancellation.Cancel();
@@ -32,15 +32,16 @@ namespace ChatServer.Handlers
             GC.SuppressFinalize(this);
         }
 
-        private async Task SendData(OpCodes opCode, Events? eventType = null, string? dataSerialized = default, int replyId = 0)
+        private async Task SendData(OpCodes opCode, Events? eventType = null, string? dataSerialized = default, uint replyId = 0)
         {
             if (!UnderSocket.Connected)
                 Dispose();
             
-            WebSocketMessage message = new(opCode, dataSerialized, eventType, default);
+            WebSocketMessage socketMessage = new(opCode, dataSerialized, eventType, default);
 
-            string messageSerialized = JsonSerializer.Serialize(message);
-            byte[] dataCompressed = GZip.Compress(messageSerialized, PacketId, replyId);
+            string messageSerialized = JsonSerializer.Serialize(socketMessage);
+            
+            byte[] dataCompressed = GZip.Compress(messageSerialized, _packetId++, ReplyId);
 
             await UnderSocket.SendAsync(dataCompressed, SocketFlags.None);
         }

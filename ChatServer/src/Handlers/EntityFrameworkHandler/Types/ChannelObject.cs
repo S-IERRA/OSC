@@ -17,7 +17,7 @@ public class Channel : ChannelShared, IEntityTypeConfiguration<ChannelShared>
         
         builder.HasOne(e => e.Server)
             .WithMany(e => e.Channels)
-            .HasForeignKey(e => e.Id)
+            .HasForeignKey(e => e.ServerId) // And that
             .IsRequired();
     }
 }
