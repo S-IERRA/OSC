@@ -1,5 +1,8 @@
-﻿namespace ChatShared.Types;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
+namespace ChatShared.Types;
+
+[NotMapped]
 public class ChannelShared
 {
     public Guid Id { get; set; }

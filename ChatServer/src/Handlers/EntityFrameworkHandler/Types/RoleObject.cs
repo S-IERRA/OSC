@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
 
+/*
 public class Role : RoleShared, IEntityTypeConfiguration<RoleShared>
 {
     public void Configure(EntityTypeBuilder<RoleShared> builder)
@@ -23,4 +24,9 @@ public class Role : RoleShared, IEntityTypeConfiguration<RoleShared>
             .WithMany(e=>e.Roles)
             .HasForeignKey(e=>e.userId);
     }
+}
+*/
+
+public class Role : RoleShared
+{
 }

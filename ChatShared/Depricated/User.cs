@@ -2,7 +2,7 @@
 using System.Text.Json.Serialization;
 
 namespace ChatShared.Types;
-
+[NotMapped]
 public class UserShared
 {
     public Guid Id { get; set; }

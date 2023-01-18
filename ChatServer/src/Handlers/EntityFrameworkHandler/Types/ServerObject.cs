@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
 
+/*
 //Convert to combined key
 public class Invite : InviteShared, IEntityTypeConfiguration<InviteShared>
 {
@@ -24,8 +25,7 @@ public class Server : ServerShared, IEntityTypeConfiguration<ServerShared>
     {
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
         builder.Property(e => e.Name).IsRequired();
-        builder.Property(e => e.Owner).IsRequired();
-        builder.Property(e => e.InviteCodes).HasDefaultValue(Array.Empty<string>());
+        builder.Property(e => e.OwnerId).IsRequired();
         
         builder.HasOne(e => e.Owner)
             .WithMany()
@@ -33,7 +33,7 @@ public class Server : ServerShared, IEntityTypeConfiguration<ServerShared>
             .IsRequired();
 
         builder.HasMany(e => e.Channels)
-            .WithOne()
+            .WithOne(e=>e.Server)
             .HasForeignKey(e => e.ServerId)
             .IsRequired();
     }
@@ -47,8 +47,6 @@ public class Member : MemberShared, IEntityTypeConfiguration<MemberShared>
         builder.HasKey(e => new {e.userId, e.serverId});
         builder.Property(e => e.serverId).IsRequired();
         
-        builder.HasKey(e => new { e.User.Id, e.userId });
-        
         builder.HasOne(e => e.User)
             .WithMany()
             .HasForeignKey(e => e.userId)
@@ -59,4 +57,17 @@ public class Member : MemberShared, IEntityTypeConfiguration<MemberShared>
             .HasForeignKey(e => e.serverId)
             .IsRequired();
     }
+}
+*/
+
+public class Invite : InviteShared
+{
+}
+
+public class Server : ServerShared
+{
+}
+
+public class Member : MemberShared
+{
 }

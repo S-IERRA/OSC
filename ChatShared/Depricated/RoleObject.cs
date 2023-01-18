@@ -2,6 +2,7 @@
 
 namespace ChatShared.Types;
 
+[NotMapped]
 public class RoleShared
 {
     public Guid Id { get; set; }

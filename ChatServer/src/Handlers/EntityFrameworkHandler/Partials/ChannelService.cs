@@ -98,12 +98,12 @@ public partial record AccountService
             await SocketUser.Send(OpCodes.InvalidRequest);
             return;
         }
-
+        
         Message newMessage = new()
         {
-            Author = member,
-            Channel = channel,
-            Server = server,
+            AuthorId = member.Id,
+            ChannelId = channel.Id,
+            ServerId = server.Id,
             Content = messageEvent.Content
         };
 

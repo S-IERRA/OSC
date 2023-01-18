@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ChatServer.Handlers;
 
+/*
 public class User : UserShared, IEntityTypeConfiguration<UserShared>
 {
     public void Configure(EntityTypeBuilder<UserShared> builder)
@@ -21,4 +22,9 @@ public class User : UserShared, IEntityTypeConfiguration<UserShared>
 
         builder.Property(e => e.Status).HasDefaultValue(Status.Offline);
     }
+}*/
+
+public class User : UserShared
+{
+    
 }

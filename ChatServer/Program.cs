@@ -1,16 +1,40 @@
-﻿using System.IO.Compression;
-using System.Net.NetworkInformation;
-using System.Text;
-using ChatServer.Handlers;
+﻿using ChatServer.Rewrite;
+using Microsoft.EntityFrameworkCore;
 
 //SocketServer2 a = new SocketServer2();
 //await a.Start();
 
-Factory factory = new Factory();
-EntityFramework2 ctx = factory.CreateDbContext();
+Factory2 factory = new();
+EntityFramework3 ctx = factory.CreateDbContext();
 
 await ctx.Database.EnsureDeletedAsync();
 await ctx.Database.EnsureCreatedAsync();
+
+Guid userId = Guid.NewGuid();
+Guid serverId = Guid.NewGuid();
+
+ctx.Users.Add(new User
+{
+    Email = "test@gmail.com",
+    Id = userId,
+    Password = "test123",
+    Username = "S-IERRA"
+});
+
+ctx.Servers.Add(new Server
+{
+    Id = serverId,
+    Name = "Test",
+    OwnerId = userId
+});
+
+ctx.Members.Add(new Member
+{
+    UserId = userId,
+    ServerId = serverId
+});
+
+await ctx.SaveChangesAsync();
 
 Thread.Sleep(-1);
 

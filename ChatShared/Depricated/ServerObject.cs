@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 namespace ChatShared.Types;
 
 //Convert to combined key
+[NotMapped]
 public class InviteShared
 {
     public Guid Id { get; set; }
@@ -11,7 +12,7 @@ public class InviteShared
     public Guid ServerId { get; set; }
     public string InviteCode { get; set; }
 }
-
+[NotMapped]
 public class ServerShared
 {
      public Guid Id { get; set; }
@@ -33,6 +34,7 @@ public class ServerShared
 }
 
 //Remove id convert to combined key
+[NotMapped]
 public class MemberShared
 {
     public Guid Id { get; set; }
