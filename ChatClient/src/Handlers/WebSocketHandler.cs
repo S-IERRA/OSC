@@ -16,7 +16,7 @@ namespace ChatClient.Handlers
         private readonly Dictionary<uint, TaskCompletionSource<WebSocketMessage>> _replyTasks = new();
 
         //Move this to a user config file
-        private static string _userSession = "";
+        private static Guid _userSession { get; set; }
         private static uint PacketIndex = 1;
 
         private async void ReceiveMessages()
@@ -43,7 +43,7 @@ namespace ChatClient.Handlers
                     int length = GZip.Byte2Int(decompressedBytes, totalRead + 8);
 
                     string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 12, length);
-                    totalRead += length + 4;
+                    totalRead += length + 12;
                     PacketIndex++;
 
                     if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))

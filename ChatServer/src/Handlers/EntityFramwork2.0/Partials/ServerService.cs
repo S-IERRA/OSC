@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using ChatShared;
+using ChatShared.DTos;
 using ChatShared.Json;
 using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using Serilog;
 
 namespace ChatServer.Handlers;
 
+//Todo: Clean this up
 public partial record AccountService
 {
      public async Task CreateServer(string? message, User user)
@@ -35,9 +37,10 @@ public partial record AccountService
         
         Context.Servers.Add(server);
         Context.Channels.Add(new Channel {
+            Id = Guid.NewGuid(),
             ServerId = serverId,
             Name = "General",
-            ViewPermission = Permissions.Member,
+            ViewPermissions = Permissions.Member,
         });
 
         await Context.SaveChangesAsync();

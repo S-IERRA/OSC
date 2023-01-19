@@ -14,7 +14,7 @@ using Serilog;
 
 namespace ChatServer.Handlers;
 
-public class SocketServer2 : IDisposable
+public class SocketServer : IDisposable
 {
     private static readonly Factory Factory = new Factory();
     private static readonly CancellationTokenSource Cts = new();
@@ -68,7 +68,7 @@ public class SocketServer2 : IDisposable
     //Todo: optimisation and clean-up phase
     private async Task VirtualUserHandler(SocketUser socketUser)
     {
-        EntityFramework2 context = Factory.CreateDbContext();
+        EntityFramework context = Factory.CreateDbContext();
         AccountService userDbService = new(context, socketUser);
         
         byte[] localBuffer = new byte[512];
@@ -139,9 +139,8 @@ public class SocketServer2 : IDisposable
                 socketUser.ReplyId = GZip.Byte2UInt(decompressedBytes, totalRead);
                 int length = GZip.Byte2Int(decompressedBytes, totalRead + 8);
                 
-                totalRead += length + 12;
-
                 string rawMessage = Encoding.UTF8.GetString(decompressedBytes, totalRead + 12, length);
+                totalRead += length + 12;
                 
                 if (!JsonHelper.TryDeserialize<WebSocketMessage>(rawMessage, out var socketMessage))
                 {
@@ -181,7 +180,7 @@ public class SocketServer2 : IDisposable
                 }
 
                 //Todo: Potentially huge vulnerability due to ip spoofing
-                string? sessionToken = socketUser.SessionId ?? socketMessage.Session;
+                Guid? sessionToken = socketUser.SessionId ?? socketMessage.Session;
                 
                 //Get user by session
                 //This seems quite inefficient as we are querying the database fore each request
@@ -247,7 +246,7 @@ public class SocketServer2 : IDisposable
         ConnectedIps.Clear();
     }
 
-    ~SocketServer2()
+    ~SocketServer()
     {
         Dispose(false);
     }

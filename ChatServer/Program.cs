@@ -1,11 +1,11 @@
-﻿using ChatServer.Rewrite;
+﻿using ChatServer.Handlers;
 using Microsoft.EntityFrameworkCore;
 
-//SocketServer2 a = new SocketServer2();
-//await a.Start();
-
-Factory2 factory = new();
-EntityFramework3 ctx = factory.CreateDbContext();
+SocketServer a = new();
+await a.Start();
+/*
+Factory factory = new();
+EntityFramework ctx = factory.CreateDbContext();
 
 await ctx.Database.EnsureDeletedAsync();
 await ctx.Database.EnsureCreatedAsync();
@@ -34,7 +34,7 @@ ctx.Members.Add(new Member
     ServerId = serverId
 });
 
-await ctx.SaveChangesAsync();
+await ctx.SaveChangesAsync();*/
 
 Thread.Sleep(-1);
 

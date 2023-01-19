@@ -2,13 +2,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace ChatServer.Rewrite;
+namespace ChatServer.Handlers;
 
 //Todo: Swap depricated files for the new ones
 
-public class Server : ServerShared2, IEntityTypeConfiguration<ServerShared2>
+public class Server : ServerShared, IEntityTypeConfiguration<ServerShared>
 {
-    public void Configure(EntityTypeBuilder<ServerShared2> builder)
+    public void Configure(EntityTypeBuilder<ServerShared> builder)
     {
         builder.ToTable("Servers");
         
@@ -35,9 +35,9 @@ public class Member : ServerMemberShared, IEntityTypeConfiguration<ServerMemberS
     }
 }
 
-public class Channel : ChannelShared2, IEntityTypeConfiguration<ChannelShared2>
+public class Channel : ChannelShared, IEntityTypeConfiguration<ChannelShared>
 {
-    public void Configure(EntityTypeBuilder<ChannelShared2> builder)
+    public void Configure(EntityTypeBuilder<ChannelShared> builder)
     {
         builder.ToTable("Channels");
         
@@ -76,14 +76,6 @@ public class Message : MessageShared, IEntityTypeConfiguration<MessageShared>
         builder.Property(e => e.Content)
             .IsRequired();
     }
-}
-
-public enum Permissions
-{
-    Member,
-    CanKick,
-    CanBan,
-    Admin,
 }
 
 public class Role : RoleShared, IEntityTypeConfiguration<RoleShared>

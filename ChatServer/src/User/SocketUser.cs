@@ -17,7 +17,7 @@ namespace ChatServer.Handlers
 
         //public IPAddress UserIp { get; set; 
         public bool IsIdentified = false;
-        public string? SessionId;
+        public Guid? SessionId;
         
         private uint _packetId = 1;
         public uint ReplyId = 1;

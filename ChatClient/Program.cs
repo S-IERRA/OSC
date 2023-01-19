@@ -30,7 +30,7 @@ for (;;)
                 });
 
                 var reply = await webSocket.SendReply(OpCodes.Identify, sonData);
-                Console.WriteLine("passed");
+                Console.WriteLine(reply.Message);
                 break;
 
             case 5:

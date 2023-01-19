@@ -1,20 +1,19 @@
-﻿using ChatShared.DTos;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
 #pragma warning disable CS0649
 #pragma warning disable CS8618
 
-namespace ChatServer.Rewrite;
+namespace ChatServer.Handlers;
 
-//Todo: MAJOR runtime error with database model creation
-public class EntityFramework3 : DbContext
+public class EntityFramework : DbContext
 {
-    public EntityFramework3(DbContextOptions options) : base(options) { }
+    public EntityFramework(DbContextOptions options) : base(options) { }
     
     public DbSet<User> Users { get; set; }
     public DbSet<Server> Servers { get; set; }
     public DbSet<Member> Members { get; set; }
+    public DbSet<Channel> Channels { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -23,11 +22,11 @@ public class EntityFramework3 : DbContext
     }
 }
 
-public class Factory2 : IDesignTimeDbContextFactory<EntityFramework3>
+public class Factory : IDesignTimeDbContextFactory<EntityFramework>
 {
-    public EntityFramework3 CreateDbContext(string[]? args = null)
+    public EntityFramework CreateDbContext(string[]? args = null)
     {
-        DbContextOptionsBuilder builder = new DbContextOptionsBuilder<EntityFramework3>();
+        DbContextOptionsBuilder builder = new DbContextOptionsBuilder<EntityFramework>();
         builder.UseNpgsql("Host=localhost;Port=5432;Username=postgres;Password=root;Database=chat");
         
         return new(builder.Options);

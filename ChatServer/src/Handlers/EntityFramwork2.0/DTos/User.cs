@@ -2,11 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace ChatServer.Rewrite;
+namespace ChatServer.Handlers;
 
-public class User : UserShared2, IEntityTypeConfiguration<UserShared2>
+public class User : UserShared, IEntityTypeConfiguration<UserShared>
 {
-    public void Configure(EntityTypeBuilder<UserShared2> builder)
+    public void Configure(EntityTypeBuilder<UserShared> builder)
     {
         builder.ToTable("Users");
 

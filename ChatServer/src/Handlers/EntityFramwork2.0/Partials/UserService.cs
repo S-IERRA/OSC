@@ -43,6 +43,7 @@ public partial record AccountService
 
         Context.Users.Add(new User()
         {
+            Id = Guid.NewGuid(),
             Email = registerEvent.Email,
             Password = hashedPassword,
             Username = registerEvent.Username,
@@ -61,23 +62,21 @@ public partial record AccountService
             User? user = await Context.Users
                 .Where(u => u.Email == loginEvent.Email)
                 .FirstOrDefaultAsync();
-
-            Log.Debug("Called Login");
-
+            
             if (user is null || !Pbkdf2.ValidatePassword(loginEvent.Password, user.Password))
             {
                 await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidUserOrPass);
                 return;
             }
 
-            string session = Guid.NewGuid().ToString();
+            Guid session = Guid.NewGuid();
 
             user.Session = session;
             SocketUser.SessionId = session;
             SocketUser.IsIdentified = true;
 
             await Context.SaveChangesAsync();
-            await SocketUser.Send(Events.Identified, "TEST");
+            await SocketUser.Send(Events.Identified, "test"); //Todo: Convert to DTo with Auto mapper
 
             //Log.Information($"User {user.Email} logged in");
         }
@@ -87,7 +86,7 @@ public partial record AccountService
         }
     }
 
-    public async Task Login(string session)
+    public async Task Login(Guid session)
     {
         if (SocketUser.IsIdentified)
             return;

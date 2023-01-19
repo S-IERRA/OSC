@@ -90,10 +90,10 @@ public partial record AccountService
 
         Log.Debug("test2");
 
-        var member = await Context.Members.FirstOrDefaultAsync(x => x.Id == user.Id);
+        var member = await Context.Members.FirstOrDefaultAsync(x => x.UserId == user.Id);
         var server = await Context.Servers.FirstOrDefaultAsync(x => x.Id == messageEvent.ServerId);
         
-        if (!member.Permissions.HasFlag(channel.ViewPermission))
+        if (!member.Permissions.HasFlag(channel.ViewPermissions))
         {
             await SocketUser.Send(OpCodes.InvalidRequest);
             return;
@@ -101,9 +101,10 @@ public partial record AccountService
         
         Message newMessage = new()
         {
-            AuthorId = member.Id,
+            Id = Guid.NewGuid(),
+            AuthorId = member.UserId,
             ChannelId = channel.Id,
-            ServerId = server.Id,
+            ServerId = channel.ServerId,
             Content = messageEvent.Content
         };
 
