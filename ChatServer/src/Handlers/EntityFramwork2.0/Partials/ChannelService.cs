@@ -69,6 +69,7 @@ public partial record AccountService
         */
     }
 
+    //Todo: Messages have to be pushed to subsccribers
     public async Task SendMessage(string? message, User user)
     {
 
@@ -90,6 +91,7 @@ public partial record AccountService
 
         Log.Debug("test2");
 
+        //Todo: null checks
         var member = await Context.Members.FirstOrDefaultAsync(x => x.UserId == user.Id);
         var server = await Context.Servers.FirstOrDefaultAsync(x => x.Id == messageEvent.ServerId);
         
