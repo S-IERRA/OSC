@@ -34,6 +34,7 @@ public class SnakeCase : JsonNamingPolicy
     }
 }
 
+//Optimise this
 public static class JsonHelper
 {
     public static bool TryDeserialize<TClass>(string? message, [NotNullWhen(true)] out TClass? result)

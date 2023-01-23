@@ -7,7 +7,6 @@ using ChatServer.Objects;
 using ChatShared;
 using ChatShared.Json;
 using ChatShared.Types;
-
 using Microsoft.EntityFrameworkCore;
 
 using Serilog;

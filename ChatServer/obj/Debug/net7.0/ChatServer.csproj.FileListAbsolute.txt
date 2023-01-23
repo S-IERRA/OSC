@@ -171,3 +171,6 @@ D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\MediatR.dll
 D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\MediatR.Contracts.dll
 D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\ChatShared.dll
 D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\ChatShared.pdb
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\FluentValidation.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Mapster.dll
+D:\projects\V-ARS\OSC\ChatServer\bin\Debug\net7.0\Mapster.Core.dll

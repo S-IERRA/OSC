@@ -1,7 +1,7 @@
-﻿using System.Text.RegularExpressions;
-
+﻿using ChatShared.DTos;
 using ChatShared.Json;
 using ChatShared.Types;
+using FluentValidation.Results;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -13,40 +13,23 @@ public partial record AccountService
 {
     public async Task Register(LoginRegisterEvent registerEvent)
     {
-        if (registerEvent is { Username: null } or { Email: null })
+        LoginRegisterEventValidator validator = new(Context);
+        ValidationResult result = await validator.ValidateAsync(registerEvent);
+
+        if (!result.IsValid)
         {
-            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.MissingFields);
-            return;
+			await SocketUser.Send(OpCodes.InvalidRequest, result.Errors);
+			return;
         }
 
-        if (!Regex.IsMatch(registerEvent.Email, @"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$",
-                RegexOptions.NonBacktracking | RegexOptions.Compiled)
-            || registerEvent.Email.Length > 254)
-        {
-            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidEmail);
-            return;
-        }
-
-        if (registerEvent.Password.Length is < 6 or > 27)
-        {
-            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidPasswordLength);
-            return;
-        }
-
-        if (Context.Users.Any(user => user.Email == registerEvent.Email))
-        {
-            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.EmailAlreadyExists);
-            return;
-        }
-
-        string hashedPassword = Pbkdf2.CreateHash(registerEvent.Password);
+		string hashedPassword = Pbkdf2.CreateHash(registerEvent.Password);
 
         Context.Users.Add(new User()
         {
             Id = Guid.NewGuid(),
-            Email = registerEvent.Email,
+            Email = registerEvent.Email!,
             Password = hashedPassword,
-            Username = registerEvent.Username,
+            Username = registerEvent.Username!,
         });
 
         await Context.SaveChangesAsync();
@@ -57,33 +40,26 @@ public partial record AccountService
 
     public async Task Login(LoginRegisterEvent loginEvent)
     {
-        try
+        User? user = await Context.Users
+            .Where(u => u.Email == loginEvent.Email)
+            .FirstOrDefaultAsync();
+
+        if (user is null || !Pbkdf2.ValidatePassword(loginEvent.Password, user.Password))
         {
-            User? user = await Context.Users
-                .Where(u => u.Email == loginEvent.Email)
-                .FirstOrDefaultAsync();
-            
-            if (user is null || !Pbkdf2.ValidatePassword(loginEvent.Password, user.Password))
-            {
-                await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidUserOrPass);
-                return;
-            }
-
-            Guid session = Guid.NewGuid();
-
-            user.Session = session;
-            SocketUser.SessionId = session;
-            SocketUser.IsIdentified = true;
-
-            await Context.SaveChangesAsync();
-            await SocketUser.Send(Events.Identified, "test"); //Todo: Convert to DTo with Auto mapper
-
-            //Log.Information($"User {user.Email} logged in");
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidUserOrPass);
+            return;
         }
-        catch(Exception e)
-        {
-            Log.Fatal(e, "Error while logging in");
-        }
+
+        Guid session = Guid.NewGuid();
+
+        user.Session = session;
+        SocketUser.SessionId = session;
+        SocketUser.IsIdentified = true;
+
+        await Context.SaveChangesAsync();
+        await SocketUser.Send(Events.Identified, "test"); //Todo: Convert to DTo with Auto mapper
+
+        Log.Information($"User {user.Email} logged in");
     }
 
     public async Task Login(Guid session)
@@ -101,7 +77,9 @@ public partial record AccountService
 
         SocketUser.IsIdentified = true;
 
-        await SocketUser.Send(Events.Identified, userSession);
+        var userDTo = (UserLoggedIn)userSession;
+
+        await SocketUser.Send(Events.Identified, userDTo);
 
         Log.Information($"Ip {SocketUser.UnderSocket.RemoteEndPoint} Logged into account {userSession.Email}");
     }

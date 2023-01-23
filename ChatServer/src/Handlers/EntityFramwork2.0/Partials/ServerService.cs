@@ -1,6 +1,5 @@
 ﻿using System.Text.RegularExpressions;
 using ChatShared;
-using ChatShared.DTos;
 using ChatShared.Json;
 using ChatShared.Types;
 using Microsoft.EntityFrameworkCore;
@@ -191,7 +190,7 @@ public partial record AccountService
                 return;
             }*/
 
-            Invite invite = new()
+            /*Invite invite = new()
             {
                 InviteCode = createInvite.InviteCode
             };
@@ -200,7 +199,7 @@ public partial record AccountService
             await Context.SaveChangesAsync();
 
             await SocketUser.Send(Events.ServerInviteCreated, invite);
-            Log.Information($"User {user.Username} created invite {invite.InviteCode} for server {server.Name}");
+            Log.Information($"User {user.Username} created invite {invite.InviteCode} for server {server.Name}");*/
         }
         catch (Exception e)
         {

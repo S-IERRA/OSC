@@ -1,0 +1,12 @@
+D:\projects\V-ARS\OSC\ChatShared\bin\Debug\net7.0\ChatShared.deps.json
+D:\projects\V-ARS\OSC\ChatShared\bin\Debug\net7.0\ChatShared.dll
+D:\projects\V-ARS\OSC\ChatShared\bin\Debug\net7.0\ChatShared.pdb
+D:\projects\V-ARS\OSC\ChatShared\obj\Debug\net7.0\ChatShared.csproj.AssemblyReference.cache
+D:\projects\V-ARS\OSC\ChatShared\obj\Debug\net7.0\ChatShared.GeneratedMSBuildEditorConfig.editorconfig
+D:\projects\V-ARS\OSC\ChatShared\obj\Debug\net7.0\ChatShared.AssemblyInfoInputs.cache
+D:\projects\V-ARS\OSC\ChatShared\obj\Debug\net7.0\ChatShared.AssemblyInfo.cs
+D:\projects\V-ARS\OSC\ChatShared\obj\Debug\net7.0\ChatShared.csproj.CoreCompileInputs.cache
+D:\projects\V-ARS\OSC\ChatShared\obj\Debug\net7.0\ChatShared.dll
+D:\projects\V-ARS\OSC\ChatShared\obj\Debug\net7.0\refint\ChatShared.dll
+D:\projects\V-ARS\OSC\ChatShared\obj\Debug\net7.0\ChatShared.pdb
+D:\projects\V-ARS\OSC\ChatShared\obj\Debug\net7.0\ref\ChatShared.dll

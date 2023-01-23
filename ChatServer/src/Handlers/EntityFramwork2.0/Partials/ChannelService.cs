@@ -39,7 +39,7 @@ public partial record AccountService
         await SocketUser.Send(Events.MessagesRequested, channelSession.Messages);
     }
 
-    //Permissions vuln
+    //Todo: Permissions vuln
     public async Task GetServerChannels(Guid serverId)
     {
         if (await Context.Servers.Where(x => x.Id == serverId).Include(x => x.Channels).FirstOrDefaultAsync() is
@@ -88,8 +88,6 @@ public partial record AccountService
 
             return;
         }
-
-        Log.Debug("test2");
 
         //Todo: null checks
         var member = await Context.Members.FirstOrDefaultAsync(x => x.UserId == user.Id);
