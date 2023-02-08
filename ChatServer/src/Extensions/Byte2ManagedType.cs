@@ -11,7 +11,7 @@ public static class Byte2ManagedType
         {
             fixed (byte* pBytes = bytes)
             {
-                return (T?)Marshal.PtrToStructure(new IntPtr(pBytes), typeof(T));
+                return (T?)Marshal.PtrToStructure(new nint(pBytes), typeof(T));
             }
         }
     }

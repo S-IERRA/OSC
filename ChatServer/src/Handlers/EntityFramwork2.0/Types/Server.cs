@@ -2,13 +2,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace ChatServer.Handlers;
+using System.ComponentModel.DataAnnotations.Schema;
 
-//Todo: Swap depricated files for the new ones
+namespace ChatServer.Handlers;
 
 public class Server : ServerShared, IEntityTypeConfiguration<ServerShared>
 {
-    public void Configure(EntityTypeBuilder<ServerShared> builder)
+	public ICollection<ServerSubscriber> Subscribers { get; set; } = new HashSet<ServerSubscriber>();
+
+	public void Configure(EntityTypeBuilder<ServerShared> builder)
     {
         builder.ToTable("Servers");
         
@@ -57,5 +59,25 @@ public class Invite : InviteShared, IEntityTypeConfiguration<InviteShared>
         builder.HasKey(e => new {e.ServerId, e.InviteCode});
 
         builder.Property(e => e.InviteCode).HasMaxLength(25);
+    }
+}
+
+public class ServerSubscriber : IEntityTypeConfiguration<ServerSubscriber>
+{
+    public Guid Id { get; set; }
+
+    public Server Server { get; set; }
+	public Guid ServerId { get; set; }
+
+	public required byte[] AddressBytes { get; set; }
+	public required int Port { get; set; }
+
+    public void Configure(EntityTypeBuilder<ServerSubscriber> builder)
+    {
+        builder.HasKey(e => e.Id);
+
+        builder.HasOne(e => e.Server)
+            .WithMany(e => e.Subscribers)
+            .HasForeignKey(e => e.ServerId);
     }
 }

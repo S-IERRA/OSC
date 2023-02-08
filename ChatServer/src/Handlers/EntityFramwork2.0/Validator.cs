@@ -11,7 +11,8 @@ namespace ChatServer.Handlers
 		{
 			RuleFor(x => x.Password)
 				.NotEmpty()
-				.Length(6, 27);
+				.Length(6, 27)
+				.WithMessage(ErrorMessages.InvalidPasswordLength);
 
 			When(x => x.Username == null || x.Email == null, () =>
 			{

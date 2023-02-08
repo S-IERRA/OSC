@@ -1,10 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatServer", "ChatServer\ChatServer.csproj", "{CA4B8D1D-085D-4AC4-BA75-973656A49275}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33122.133
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatServer", "ChatServer\ChatServer.csproj", "{CA4B8D1D-085D-4AC4-BA75-973656A49275}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient", "ChatClient\ChatClient.csproj", "{9C68A5D1-CA88-4D6F-AC17-A10509FE805D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatClient", "ChatClient\ChatClient.csproj", "{9C68A5D1-CA88-4D6F-AC17-A10509FE805D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatShared", "ChatShared\ChatShared.csproj", "{6713AF06-9281-4CBF-B4EC-F32906E388F6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatShared", "ChatShared\ChatShared.csproj", "{6713AF06-9281-4CBF-B4EC-F32906E388F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +27,11 @@ Global
 		{6713AF06-9281-4CBF-B4EC-F32906E388F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6713AF06-9281-4CBF-B4EC-F32906E388F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6713AF06-9281-4CBF-B4EC-F32906E388F6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3F11ECD0-BF2D-4062-B997-E8285F33D188}
 	EndGlobalSection
 EndGlobal

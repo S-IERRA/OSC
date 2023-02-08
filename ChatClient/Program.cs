@@ -7,6 +7,7 @@ using ChatShared.Json;
 using ChatShared.Types;
 
 //Todo: Cachce system for msgs
+//The entire client side is temporary as I have not yet have had time to create a client side UI, the actual code is on the server side.
 
 WebSocketHandler webSocket = new();
 string sonData = "";
@@ -41,41 +42,53 @@ for (;;)
                     Email = command[2]
                 });
 
-                await webSocket.Send(OpCodes.Register, sonData);
+                reply = await webSocket.SendReply(OpCodes.Register, sonData);
+                Console.WriteLine(reply.Message);
                 break;
-
+            
             //join server
             case 8:
                 sonData = JsonSerializer.Serialize(new JoinServerEvent(command[0]));
 
-                await webSocket.Send(OpCodes.JoinServer, sonData);
+                reply = await webSocket.SendReply(OpCodes.JoinServer, sonData);
+                Console.WriteLine(reply.Message);
                 break;
 
-            /*
             case 6:
-                sonData = JsonSerializer.Serialize(new SendMessageEvent(command[0], Int32.Parse(command[1]), Int32.Parse(command[2])));
+                sonData = JsonSerializer.Serialize(new SendMessageEvent(command[0], Guid.Parse(command[1]), Guid.Parse(command[2])));
 
-                await webSocket.Send(OpCodes.SendMessage, sonData);
+                reply = await webSocket.SendReply(OpCodes.SendMessage, sonData);
+                Console.WriteLine(reply.Message);           
                 break;
 
             case 15:
-                sonData = JsonSerializer.Serialize(new RequestChannelMessages(Int32.Parse(command[0])));
+                sonData = JsonSerializer.Serialize(new RequestChannelMessages(Guid.Parse(command[0])));
 
-                await webSocket.Send(OpCodes.RequestChannelMessages, sonData);
+                reply = await webSocket.SendReply(OpCodes.RequestChannelMessages, sonData);
+                Console.WriteLine(reply.Message);       
                 break;
 
             case 7:
                 sonData = JsonSerializer.Serialize(new CreateServerEvent(command[0]));
 
-                await webSocket.Send(OpCodes.CreateServer, sonData);
+                reply = await webSocket.SendReply(OpCodes.CreateServer, sonData);
+                Console.WriteLine(reply.Message);
                 break;
 
             case 16:
-                sonData = JsonSerializer.Serialize(new CreateInvite(Int32.Parse(command[0]), command[1]));
+                sonData = JsonSerializer.Serialize(new CreateInvite(Guid.Parse(command[0]), command[1]));
 
-                await webSocket.Send(OpCodes.CreateServerInvite, sonData);
-                break;*/
-        }
+                reply = await webSocket.SendReply(OpCodes.CreateServerInvite, sonData);
+                Console.WriteLine(reply.Message);           
+                break;
+
+            case 17:
+				sonData = JsonSerializer.Serialize(new ServerEvent(Guid.Parse(command[0])));
+
+                reply = await webSocket.SendReply(OpCodes.SubscribeServerMessages, sonData);
+                Console.WriteLine(reply.Message);		
+                break;
+		}
     }
     catch (Exception e)
     {

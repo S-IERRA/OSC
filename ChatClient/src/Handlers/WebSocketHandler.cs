@@ -60,6 +60,9 @@ namespace ChatClient.Handlers
 
                     if (socketMessage.OpCode == OpCodes.HeartBeat) 
                         await Send(OpCodes.HeartBeatAck);
+
+                    if(socketMessage.EventType is not null)
+                        Console.WriteLine(socketMessage.Message);
                 }
             }
         }
@@ -69,8 +72,8 @@ namespace ChatClient.Handlers
             Client.DontFragment = true;
             
             //Resolve dns
-            //IPAddress addresses = Dns.GetHostAddresses("5.tcp.eu.ngrok.io")[0];
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Loopback, 8787);
+            IPAddress addresses = Dns.GetHostAddresses("0.tcp.eu.ngrok.io")[0];
+            IPEndPoint endPoint = new IPEndPoint(addresses, 11312);
             
             Client.Connect(endPoint);
             ReceiveMessages();

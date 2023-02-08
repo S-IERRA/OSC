@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Buffers;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using ChatServer.Extensions;
@@ -15,12 +16,12 @@ namespace ChatServer.Handlers;
 
 public class SocketServer : IDisposable
 {
+    private static readonly ArrayPool<int> ArrayPool = ArrayPool<int>.Create();
+
     private static readonly Factory Factory = new Factory();
     private static readonly CancellationTokenSource Cts = new();
 
-    private static readonly HashSet<EndPoint> ConnectedIps = new();
-    
-    private static readonly Socket     Listener = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+	private static readonly Socket     Listener = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
     private static readonly IPEndPoint EndPoint = new(IPAddress.Loopback, 8787);
     
     private SocketState _state = SocketState.Undefined;
@@ -47,16 +48,9 @@ public class SocketServer : IDisposable
         while (CanRun())
         {
             Socket socket = await Listener.AcceptAsync();
-            EndPoint?  ip = socket.RemoteEndPoint;
+			IPEndPoint?  ip = (IPEndPoint)socket.RemoteEndPoint; 
 
             SocketUser socketUser = new(socket);
-            if (ip == null || ConnectedIps.Contains(ip))
-            {
-                socket.Close();
-                continue;
-            }
-            
-            ConnectedIps.Add(ip);
             
             Log.Information($"New connection from {ip}");
             
@@ -67,9 +61,6 @@ public class SocketServer : IDisposable
     //Todo: optimisation and clean-up phase
     private async Task VirtualUserHandler(SocketUser socketUser)
     {
-        EntityFramework context = Factory.CreateDbContext();
-        AccountService userDbService = new(context, socketUser);
-        
         byte[] localBuffer = new byte[512];
 
         bool isTimedOut = false,
@@ -97,8 +88,8 @@ public class SocketServer : IDisposable
 
                 if (!receivedAck)
                 {
-                    if(socketUser.IsIdentified)
-                        await userDbService.LogOut();
+                    //if(socketUser.IsIdentified)
+                      //  await userDbService.LogOut();
 
                     await socketUser.Send(OpCodes.ConnectionClosed);
                     socketUser.Dispose();
@@ -120,6 +111,8 @@ public class SocketServer : IDisposable
         {
             if (isTimedOut)
                 return; //Convert this to an actual timeout
+            
+            //Todo: memory leak, use shared arrays
             MemoryStream dataStream = new();
 
             do
@@ -155,6 +148,9 @@ public class SocketServer : IDisposable
                     receivedAck = true;
                     continue;
                 }
+                
+                EntityFramework context = Factory.CreateDbContext();
+                AccountService userDbService = new(context, socketUser);
 
                 if (!socketUser.IsIdentified)
                 {
@@ -208,7 +204,6 @@ public class SocketServer : IDisposable
                         await userDbService.LeaveServer(socketMessage.Message, user);
                         continue;
                     
-                    //Todo: This needs to send out messages to subscribed users 
                     case OpCodes.SendMessage:
                         await userDbService.SendMessage(socketMessage.Message, user);
                         continue;
@@ -220,7 +215,18 @@ public class SocketServer : IDisposable
                     case OpCodes.CreateServerInvite:
                         await userDbService.CreateInvite(socketMessage.Message, user);
                         continue;
-                }
+
+                    case OpCodes.SubscribeServerMessages:
+						await userDbService.SubscribeServer(socketMessage.Message, (IPEndPoint)socketUser.UnderSocket.RemoteEndPoint);
+						continue;
+
+                        //TODO: oh myg od
+					case OpCodes.UnsubscribeServerMessages:
+						continue;
+				}
+                
+                
+                context.Dispose();
             }
         }
     }
@@ -241,8 +247,6 @@ public class SocketServer : IDisposable
 
         Log.Information("Server stopped");
         Log.CloseAndFlush();
-        
-        ConnectedIps.Clear();
     }
 
     ~SocketServer()

@@ -985,6 +985,9 @@
         }
       },
       "ChatShared/1.0.0": {
+        "dependencies": {
+          "Mapster": "7.3.0"
+        },
         "runtime": {
           "ChatShared.dll": {}
         }

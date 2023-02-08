@@ -34,3 +34,5 @@ D:\projects\V-ARS\OSC\ChatClient\obj\Debug\net7.0\ChatClient.genruntimeconfig.ca
 D:\projects\V-ARS\OSC\ChatClient\obj\Debug\net7.0\ref\ChatClient.dll
 D:\projects\V-ARS\OSC\ChatClient\bin\Debug\net7.0\ChatShared.dll
 D:\projects\V-ARS\OSC\ChatClient\bin\Debug\net7.0\ChatShared.pdb
+D:\projects\V-ARS\OSC\ChatClient\bin\Debug\net7.0\Mapster.dll
+D:\projects\V-ARS\OSC\ChatClient\bin\Debug\net7.0\Mapster.Core.dll

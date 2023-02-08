@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace ChatServer.Handlers;
 
+//Todo: remove "shared" files and replace with DTos
 public class EntityFramework : DbContext
 {
     public EntityFramework(DbContextOptions options) : base(options) { }
@@ -14,6 +15,9 @@ public class EntityFramework : DbContext
     public DbSet<Server> Servers { get; set; }
     public DbSet<Member> Members { get; set; }
     public DbSet<Channel> Channels { get; set; }
+    public DbSet<Message> Messages { get; set; }
+
+    public DbSet<ServerSubscriber> Subscribers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

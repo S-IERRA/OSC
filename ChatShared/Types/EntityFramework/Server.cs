@@ -3,7 +3,6 @@
 public class ServerShared
 {
 	public required Guid Id { get; set; }
-	public Guid Session { get; set; }
 
 	public required Guid OwnerId { get; set; }
 	public UserShared Owner { get; set; }

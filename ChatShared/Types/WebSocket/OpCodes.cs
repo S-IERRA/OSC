@@ -26,6 +26,9 @@
         BanUser = 10,
         KickUser = 11,
 
+        SubscribeServerMessages = 17,
+        UnsubscribeServerMessages = 18,
+
         //Errors
         InvalidRequest = 400,
         Unauthorized = 401,

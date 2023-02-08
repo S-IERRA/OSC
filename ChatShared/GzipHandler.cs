@@ -70,4 +70,20 @@ public static class GZip
         
         return outStream.ToArray();
     }
+    
+    /*
+    public static byte[] Decompress2(ref byte[] inBytes)
+    {
+        using MemoryStream inStream = new(inBytes);
+        using GZipStream zip = new(inStream, CompressionMode.Decompress);
+        using MemoryStream outStream = new();
+
+        Memory<byte> buffer = new(new byte[4096]);
+        int read;
+        
+        while ((read = zip.Read(buffer)) > 0)
+            outStream.Write(buffer[..read]);
+        
+        return outStream.ToArray();
+    }*/
 }

@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Net;
+using System.Text.RegularExpressions;
 using ChatShared;
 using ChatShared.Json;
 using ChatShared.Types;
@@ -10,6 +11,7 @@ namespace ChatServer.Handlers;
 //Todo: Clean this up
 public partial record AccountService
 {
+    //todo: Join as member
      public async Task CreateServer(string? message, User user)
     {
         if (!JsonHelper.TryDeserialize<CreateServerEvent>(message, out var createServerEvent))
@@ -41,6 +43,14 @@ public partial record AccountService
             Name = "General",
             ViewPermissions = Permissions.Member,
         });
+        
+        await Context.Members.AddAsync(new Member()
+        {
+            UserId = user.Id,
+            ServerId = server.Id,
+                
+            Permissions = Permissions.Member
+        });
 
         await Context.SaveChangesAsync();
         await SocketUser.Send(Events.ServerCreated, server);
@@ -50,7 +60,7 @@ public partial record AccountService
 
      public async Task DeleteServer(string? message, User user)
     {
-        if (!JsonHelper.TryDeserialize<DeleteServerEvent>(message, out var deleteServerEvent))
+        if (!JsonHelper.TryDeserialize<ServerEvent>(message, out var deleteServerEvent))
         {
             await SocketUser.Send(OpCodes.InvalidRequest);
             return;
@@ -91,9 +101,6 @@ public partial record AccountService
                 await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.ServerDoesNotExist);
                 return;
             }
-            
-            Log.Debug(server.Members.Count().ToString());
-            Log.Debug(user.Id.ToString());
 
             if (server.Members.Where(x => x.User.Id == user.Id) is not { })
             {
@@ -101,6 +108,14 @@ public partial record AccountService
                 return;
             }
 
+            await Context.Members.AddAsync(new Member()
+            {
+                UserId = user.Id,
+                ServerId = server.Id,
+                
+                Permissions = Permissions.Member
+            });
+            
             await Context.SaveChangesAsync();
             await SocketUser.Send(Events.ServerJoined, server);
 
@@ -114,7 +129,7 @@ public partial record AccountService
 
     public async Task LeaveServer(string? message, User user)
     {
-        if (!JsonHelper.TryDeserialize<LeaveServerEvent>(message, out var leaveServerEvent))
+        if (!JsonHelper.TryDeserialize<ServerEvent>(message, out var leaveServerEvent))
         {
             await SocketUser.Send(OpCodes.InvalidRequest);
             return;
@@ -159,7 +174,8 @@ public partial record AccountService
 
         await SocketUser.Send(OpCodes.RequestServers, userSession.Servers);
     }
-    
+   
+    //Fix
     public async Task CreateInvite(string? data, User user)
     {
         try
@@ -184,14 +200,16 @@ public partial record AccountService
             }*/
 
             //check if invite already exists
-            /*if (server.InviteCodes.Any(x => x.InviteCode == createInvite.InviteCode))
+            if (server.InviteCodes.Any(x => x.InviteCode == createInvite.InviteCode))
             {
-                await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InviteAlreadyExists);
+                await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.InvalidInvite);
                 return;
-            }*/
+            }
 
-            /*Invite invite = new()
+            Invite invite = new()
             {
+                Id = Guid.NewGuid(),
+                ServerId = server.Id,
                 InviteCode = createInvite.InviteCode
             };
 
@@ -199,11 +217,45 @@ public partial record AccountService
             await Context.SaveChangesAsync();
 
             await SocketUser.Send(Events.ServerInviteCreated, invite);
-            Log.Information($"User {user.Username} created invite {invite.InviteCode} for server {server.Name}");*/
+            Log.Information($"User {user.Username} created invite {invite.InviteCode} for server {server.Name}");
         }
         catch (Exception e)
         {
             Log.Fatal(e, "Error creating invite");
         }
     }
+
+    //Todo: Permissions vuln, must check if server has this user
+    public async Task SubscribeServer(string? message, IPEndPoint endpoint)
+    {
+		if (!JsonHelper.TryDeserialize<ServerEvent>(message, out var serverEvent))
+		{
+			await SocketUser.Send(OpCodes.InvalidRequest);
+			return;
+		}
+
+		if (await Context.Servers.FirstOrDefaultAsync(x => x.Id == serverEvent.ServerId) is not { } server)
+        {
+            await SocketUser.Send(OpCodes.InvalidRequest, ErrorMessages.ServerDoesNotExist);
+            return;
+        }
+
+        ServerSubscriber subscriber = new()
+        {
+            Id = Guid.NewGuid(),
+            ServerId = serverEvent.ServerId,
+
+            AddressBytes = endpoint.Address.GetAddressBytes(),
+            Port = endpoint.Port,
+        };
+
+        await Context.Subscribers.AddAsync(subscriber);
+        await Context.SaveChangesAsync();
+    }
+
+    //8regjoeiasdz3q5grwadjs:::::: TOdo: probably requires a rewrite of the POCO because idk how else im gonna find the user hauwhiuawiehiut4rwq3uhiaqwrgthuirqwhuirgqweiughtewgrtwseuahi9greuaswhifdeswauhio
+	public async Task UnsubscribeServer(string? message, User user)
+	{
+        
+	}
 }

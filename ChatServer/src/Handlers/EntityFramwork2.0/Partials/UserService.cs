@@ -13,29 +13,35 @@ public partial record AccountService
 {
     public async Task Register(LoginRegisterEvent registerEvent)
     {
-        LoginRegisterEventValidator validator = new(Context);
-        ValidationResult result = await validator.ValidateAsync(registerEvent);
-
-        if (!result.IsValid)
+        try
         {
-			await SocketUser.Send(OpCodes.InvalidRequest, result.Errors);
-			return;
-        }
+            LoginRegisterEventValidator validator = new(Context);
+            ValidationResult result = await validator.ValidateAsync(registerEvent);
 
-		string hashedPassword = Pbkdf2.CreateHash(registerEvent.Password);
+            if (!result.IsValid)
+            {
+                await SocketUser.Send(OpCodes.InvalidRequest, result.Errors);
+                return;
+            }
 
-        Context.Users.Add(new User()
+            string hashedPassword = Pbkdf2.CreateHash(registerEvent.Password);
+
+            Context.Users.Add(new User()
+            {
+                Id = Guid.NewGuid(),
+                Email = registerEvent.Email,
+                Password = hashedPassword,
+                Username = registerEvent.Username,
+            });
+
+            await Context.SaveChangesAsync();
+            await SocketUser.Send(Events.Registered);
+
+            Log.Information($"Ip {SocketUser.UnderSocket.RemoteEndPoint} registered");
+        }catch(Exception e)
         {
-            Id = Guid.NewGuid(),
-            Email = registerEvent.Email!,
-            Password = hashedPassword,
-            Username = registerEvent.Username!,
-        });
-
-        await Context.SaveChangesAsync();
-        await SocketUser.Send(Events.Registered);
-
-        Log.Information($"Ip {SocketUser.UnderSocket.RemoteEndPoint} registered");
+            Log.Fatal(e.InnerException.Message);
+		}
     }
 
     public async Task Login(LoginRegisterEvent loginEvent)

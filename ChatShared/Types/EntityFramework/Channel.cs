@@ -17,6 +17,7 @@ public class ChannelShared
 public class MessageShared
 {
 	public required Guid Id { get; set; }
+	public string Discriminator { get; set; }
 
 	public required Guid AuthorId { get; set; }
 	public ServerMemberShared Author { get; set; }
